@@ -1,0 +1,116 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "properties": {
+        "secret_key": {
+            "type": "string",
+            "title": "Secret key",
+            "description": "The key used to sign JWT tokens and encrypt passwords. Keep it safe. You should not store the secret key in the config file and use `SHOPAPI__SECRET_KEY` env variable instead."
+        },
+        "access_token_expire": {
+            "type": "integer",
+            "title": "Access token expire (minutes)",
+            "description": "Number of minutes the access token remains valid (default: 60 minutes). If the user opts for permanent login, the validty is 3 months.",
+            "default": 60
+        },
+        "base_url": {
+            "type": "string",
+            "title": "Base url",
+            "description": "Root url path used to generate absolute links.",
+            "default": "http://localhost",
+            "examples": [
+                "https://www.example.com",
+                "http://localhost",
+                "https://my.website.com/lives/behind/proxy"
+            ]
+        },
+        "support_contact": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "title": "Support contact",
+            "description": "Contact that will be displayed to users if any unexpected error ocurrs"
+        },
+        "sso": {
+            "type": "object",
+            "properties": {
+                "google": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "client_id": {
+                            "type": "string"
+                        },
+                        "client_secret": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "facebook": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "client_id": {
+                            "type": "string"
+                        },
+                        "client_secret": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "microsoft": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "client_id": {
+                            "type": "string"
+                        },
+                        "client_secret": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "database": {
+            "type": "object",
+            "properties": {
+                "host": {
+                    "type": "string",
+                    "default": "db.sqlite3"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "backend": {
+                    "type": "string",
+                    "enum": [
+                        "sqlite",
+                        "postgres"
+                    ],
+                    "default": "sqlite"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "database": {
+                    "type": "string",
+                    "default": "shopapi"
+                }
+            }
+        }
+    }
+}
