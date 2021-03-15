@@ -163,7 +163,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "config-proxy"
-version = "0.1.4"
+version = "0.1.5"
 description = "Configuration proxy that enables specifying both source json path and / or environmental variable in order to get configuration value"
 category = "main"
 optional = false
@@ -764,7 +764,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "69af518220277c2380eb89db48dd5b44635565a4d4f13390a1327451899c75f0"
+content-hash = "1bb4b551743d24473bf7c635e739c023f8475c0de77e6a35148f21044514ca4c"
 
 [metadata.files]
 aerich = [
@@ -894,8 +894,8 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 config-proxy = [
-    {file = "config-proxy-0.1.4.tar.gz", hash = "sha256:b319e67b0d50887cbf7809de904b7bbbc38f8bb2982d84d53ffcd660f68290ec"},
-    {file = "config_proxy-0.1.4-py3-none-any.whl", hash = "sha256:d9c762452b829d50b62aa6e68b1cb81a379dc69b2275eacd873e57fb9b9fca3c"},
+    {file = "config-proxy-0.1.5.tar.gz", hash = "sha256:2cd19f88fa25c4674dbf12dc5902089b026fda2d4a3f007f6d4c552319e1fb1f"},
+    {file = "config_proxy-0.1.5-py3-none-any.whl", hash = "sha256:aba9cb46083ce7825b35ecffd9da5d5e7c2946cc985d874a520ed84909930b3b"},
 ]
 cryptography = [
     {file = "cryptography-3.4.6-cp36-abi3-macosx_10_10_x86_64.whl", hash = "sha256:57ad77d32917bc55299b16d3b996ffa42a1c73c6cfa829b14043c561288d2799"},

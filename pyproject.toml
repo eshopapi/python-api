@@ -28,8 +28,8 @@ pydantic = {extras = ["email"], version = "^1.8.1"}
 fastapi = "^0.63.0"
 aerich = "^0.5.0"
 python-dotenv = "^0.15.0"
-config-proxy = "^0.1.2"
-fastapi-sso = "^0.2.3"
+config-proxy = "^0.1.5"
+fastapi-sso = "^0.2.4"
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-jose = {extras = ["cryptography"], version = "^3.2.0"}
 
