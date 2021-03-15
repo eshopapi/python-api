@@ -22,6 +22,7 @@ async def get_user_token(
         return authorization[7:]
     if sessiontoken:
         return sessiontoken
+    return None
 
 
 async def get_user_token_strict(token: Optional[str] = Depends(get_user_token)) -> str:

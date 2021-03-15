@@ -100,6 +100,9 @@ def build_db_url() -> str:
     """Build DB tortoise orm url for connection from Config object"""
     if Config.Database.backend == "sqlite":
         return f"sqlite://{Config.Database.host}"
-    elif Config.Database.backend == "postgres":
-        return f"postgres://{Config.Database.user}:{Config.Database.password}@{Config.Database.host}/{Config.Database.database}"
+    if Config.Database.backend == "postgres":
+        return (
+            f"postgres://{Config.Database.user}:{Config.Database.password}"
+            f"@{Config.Database.host}/{Config.Database.database}"
+        )
     raise NotImplementedError(f"DB Backend {Config.Database.backend} is not implemented")

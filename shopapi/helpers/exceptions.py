@@ -38,6 +38,14 @@ class LoginReusedEmailError(LoginError):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
+class UserAlreadyExists(HTTPException):
+    """Raised when user is about to register but his email already exists"""
+
+    def __init__(self, email: Optional[str] = None):
+        detail = f"User with specified e-mail ({email}) already exists"
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
 class CredentialsException(HTTPException):
     """Raised when credentials provided by the user cannot be verified"""
 

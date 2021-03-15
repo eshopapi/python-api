@@ -1,7 +1,7 @@
 """Database models for Tortoise-ORM operations
 """
 
-from tortoise import Tortoise, fields, run_async
+from tortoise import fields
 from tortoise.models import Model
 
 TORTOISE_ORM = {

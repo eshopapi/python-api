@@ -16,20 +16,21 @@ class ORMModel(BaseModel):
         orm_mode = True
 
 
-class UserFromDB(ORMModel):
-    """UserFromDB"""
+class UserDBInput(ORMModel):
+    """User input to be loaded into DB"""
 
-    id: int
+    id: Optional[int]
     email: EmailStr
     first_name: Optional[str]
     last_name: Optional[str]
     picture: Optional[str]
+    password: bytes
 
 
-class UserDBInput(UserFromDB):
-    """User input to be loaded into DB"""
+class UserFromDB(UserDBInput):
+    """UserFromDB"""
 
-    id: Optional[int]
+    id: int
 
 
 class UserToken(BaseModel):

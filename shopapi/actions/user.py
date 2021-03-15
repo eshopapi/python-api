@@ -32,6 +32,7 @@ async def get_user_by_openid(openid: schemas.OpenID) -> Optional[schemas.UserFro
     user = await models.User.get(id=oid.user_id)
     if user:
         return schemas.UserFromDB.from_orm(user)
+    return None
 
 
 async def get_or_create_user(openid: schemas.OpenID) -> schemas.UserFromDB:
@@ -46,15 +47,14 @@ async def get_or_create_user(openid: schemas.OpenID) -> schemas.UserFromDB:
         # but the user was not created in the db
         logger.error(openid)
         raise exceptions.UnexpectedException()
-    openids_count = await models.OpenID.filter(email=openid.email).count()
+    openid_exists = await models.OpenID.filter(email=openid.email).exists()
     user_exists = await models.User.filter(email=openid.email).exists()
-    logger.info("count: %d, exists: %s", openids_count, user_exists)
-    if user_exists or openids_count:
+    if user_exists or openid_exists:
         raise exceptions.LoginReusedEmailError(openid.email)
-    user = schemas.UserDBInput(
+    user_input = schemas.UserDBInput(
         email=openid.email, first_name=openid.first_name, last_name=openid.last_name, picture=openid.picture
     )
-    user_db = await models.User.create(**user.dict(exclude_none=True))
+    user_db = await models.User.create(**user_input.dict(exclude_none=True))
     await models.OpenID.create(**openid.dict(exclude_none=True), user_id=user_db.id)
     return schemas.UserFromDB.from_orm(user_db)
 
@@ -71,7 +71,8 @@ async def login_user(
     else:
         expires = timedelta(minutes=Config.access_token_expire)
     token = security.create_access_token(user, expires, openid)
-    if redirect_to:
+    response: Response
+    if isinstance(redirect_to, str):
         if not redirect_to.startswith(Config.base_url):
             logger.warning(
                 "User %s was being redirected to %s which is not in the root domain "
@@ -81,7 +82,7 @@ async def login_user(
                 Config.base_url,
             )
             redirect_to = Config.base_url
-        response = RedirectResponse(url=redirect_to)
+        response = RedirectResponse(url=str(redirect_to))
     else:
         response = JSONResponse({"user_id": user.id, "email": user.email, "token": token})
     expires_seconds = int(expires.total_seconds())
@@ -95,3 +96,21 @@ async def user_add_openid(openid: schemas.OpenID, user_id: int):
     if await models.OpenID.filter(provider=openid.provider, provider_id=openid.provider_id).exists():
         raise exceptions.ResourceExistsException()
     await models.OpenID.create(**openid.dict(exclude_none=True))
+
+
+async def openid_email_exists(email: str) -> bool:
+    """Returns True if openid with specified email was found in the db."""
+    return await models.OpenID.filter(email=email).exists()
+
+
+async def user_email_exists(email: str) -> bool:
+    """Returns True if user with specified email was found in the db."""
+    return await models.User.filter(email=email).exists()
+
+
+async def get_user_by_email(email: str) -> Optional[schemas.UserFromDB]:
+    """Returns user by email if the user exists, otherwise returns None"""
+    user = await models.User.filter(email=email).first()
+    if not user:
+        return None
+    return schemas.UserFromDB.from_orm(user)

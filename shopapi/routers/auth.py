@@ -16,7 +16,7 @@ from starlette.responses import JSONResponse
 
 from shopapi import schemas
 from shopapi.config import Config
-from shopapi.helpers import exceptions, dependencies
+from shopapi.helpers import exceptions, dependencies, security
 from shopapi import actions
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,11 @@ def _provider_factory(provider: str) -> SSOBase:
 @router.post("/login")
 async def auth_login(user: schemas.api.LoginUserIn):
     """Login using username / password"""
-    return user
+    db_user = await actions.user.get_user_by_email(user.email)
+    if db_user is None:
+        raise exceptions.AuthenticationException()
+    if not security.verify_password(user.password, db_user.password.decode("ascii")):
+        raise exceptions.AuthenticationException()
 
 
 @router.get("/sso/{provider}/login")
@@ -91,9 +95,8 @@ async def auth_sso_callback(
         )
         response.delete_cookie("ssoaction")
         return response
-    else:
-        user = await actions.user.get_or_create_user(openid)
-        return await actions.user.login_user(user, permanent=True, redirect_to=redirect_to, openid=openid)
+    user = await actions.user.get_or_create_user(openid)
+    return await actions.user.login_user(user, permanent=True, redirect_to=redirect_to, openid=openid)
 
 
 @router.get("/sso/{provider}/add")
