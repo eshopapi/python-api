@@ -67,6 +67,14 @@ class LoginReusedEmailError(LoginError):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
+class UserAlreadyExists(HTTPException):
+    &#34;&#34;&#34;Raised when user is about to register but his email already exists&#34;&#34;&#34;
+
+    def __init__(self, email: Optional[str] = None):
+        detail = f&#34;User with specified e-mail ({email}) already exists&#34;
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
 class CredentialsException(HTTPException):
     &#34;&#34;&#34;Raised when credentials provided by the user cannot be verified&#34;&#34;&#34;
 
@@ -322,6 +330,31 @@ class ResourceExistsException(HTTPException):
 <li>builtins.BaseException</li>
 </ul>
 </dd>
+<dt id="shopapi.helpers.exceptions.UserAlreadyExists"><code class="flex name class">
+<span>class <span class="ident">UserAlreadyExists</span></span>
+<span>(</span><span>email: Optional[str] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised when user is about to register but his email already exists</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class UserAlreadyExists(HTTPException):
+    &#34;&#34;&#34;Raised when user is about to register but his email already exists&#34;&#34;&#34;
+
+    def __init__(self, email: Optional[str] = None):
+        detail = f&#34;User with specified e-mail ({email}) already exists&#34;
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>fastapi.exceptions.HTTPException</li>
+<li>starlette.exceptions.HTTPException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 </dl>
 </section>
 </article>
@@ -358,6 +391,9 @@ class ResourceExistsException(HTTPException):
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.UnexpectedException" href="#shopapi.helpers.exceptions.UnexpectedException">UnexpectedException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="shopapi.helpers.exceptions.UserAlreadyExists" href="#shopapi.helpers.exceptions.UserAlreadyExists">UserAlreadyExists</a></code></h4>
 </li>
 </ul>
 </li>

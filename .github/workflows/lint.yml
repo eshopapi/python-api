@@ -27,8 +27,3 @@ jobs:
       run: poe pylint
     - name: Lint with mypy
       run: poe mypy
-    - name: Generate documentation
-      run: |
-        poe docs
-        mkdir -p ./public
-        cp -r ./docs/* ./public/

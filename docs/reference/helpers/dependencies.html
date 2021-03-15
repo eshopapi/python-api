@@ -51,6 +51,7 @@ async def get_user_token(
         return authorization[7:]
     if sessiontoken:
         return sessiontoken
+    return None
 
 
 async def get_user_token_strict(token: Optional[str] = Depends(get_user_token)) -&gt; str:
@@ -112,7 +113,8 @@ async def get_user(token: str = Depends(get_user_token_strict)) -&gt; schemas.Us
     if authorization and authorization.startswith(&#34;Bearer &#34;):
         return authorization[7:]
     if sessiontoken:
-        return sessiontoken</code></pre>
+        return sessiontoken
+    return None</code></pre>
 </details>
 </dd>
 <dt id="shopapi.helpers.dependencies.get_user_token_strict"><code class="name flex">

@@ -38,13 +38,29 @@ These schemas have no model counterpart as they are not to be stored in the DB.
 from pydantic import BaseModel, EmailStr, constr  # pylint: disable=no-name-in-module
 
 from shopapi.constants import PASSWORD_REGEX
+from shopapi.helpers import security
 
 
 class LoginUserIn(BaseModel):
-    &#34;&#34;&#34;Model for user login input
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Model for user login input&#34;&#34;&#34;
+
     email: EmailStr
-    password: constr(strip_whitespace=True, min_length=6, regex=PASSWORD_REGEX)  # type: ignore</code></pre>
+    password: constr(strip_whitespace=True, min_length=6, regex=PASSWORD_REGEX)  # type: ignore
+
+
+class RegisterUserIn(BaseModel):
+    &#34;&#34;&#34;Model for user to register&#34;&#34;&#34;
+
+    email: EmailStr
+    password: bytes
+
+    @staticmethod
+    def from_plain(plain_user: LoginUserIn) -&gt; &#34;RegisterUserIn&#34;:
+        &#34;&#34;&#34;Creates `RegisterUserIn` instance from `LoginUserIn` instance.
+        It basically only hashes the password
+        &#34;&#34;&#34;
+        phash = security.get_password_hash(plain_user.password)
+        return RegisterUserIn(email=plain_user.email, password=phash)</code></pre>
 </details>
 </section>
 <section>
@@ -69,8 +85,8 @@ class LoginUserIn(BaseModel):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LoginUserIn(BaseModel):
-    &#34;&#34;&#34;Model for user login input
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Model for user login input&#34;&#34;&#34;
+
     email: EmailStr
     password: constr(strip_whitespace=True, min_length=6, regex=PASSWORD_REGEX)  # type: ignore</code></pre>
 </details>
@@ -88,6 +104,71 @@ class LoginUserIn(BaseModel):
 <dt id="shopapi.schemas.api.LoginUserIn.password"><code class="name">var <span class="ident">password</span> : shopapi.schemas.api.ConstrainedStrValue</code></dt>
 <dd>
 <div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="shopapi.schemas.api.RegisterUserIn"><code class="flex name class">
+<span>class <span class="ident">RegisterUserIn</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Model for user to register</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class RegisterUserIn(BaseModel):
+    &#34;&#34;&#34;Model for user to register&#34;&#34;&#34;
+
+    email: EmailStr
+    password: bytes
+
+    @staticmethod
+    def from_plain(plain_user: LoginUserIn) -&gt; &#34;RegisterUserIn&#34;:
+        &#34;&#34;&#34;Creates `RegisterUserIn` instance from `LoginUserIn` instance.
+        It basically only hashes the password
+        &#34;&#34;&#34;
+        phash = security.get_password_hash(plain_user.password)
+        return RegisterUserIn(email=plain_user.email, password=phash)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.api.RegisterUserIn.email"><code class="name">var <span class="ident">email</span> : pydantic.networks.EmailStr</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.api.RegisterUserIn.password"><code class="name">var <span class="ident">password</span> : bytes</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="shopapi.schemas.api.RegisterUserIn.from_plain"><code class="name flex">
+<span>def <span class="ident">from_plain</span></span>(<span>plain_user: <a title="shopapi.schemas.api.LoginUserIn" href="#shopapi.schemas.api.LoginUserIn">LoginUserIn</a>) ‑> <a title="shopapi.schemas.api.RegisterUserIn" href="#shopapi.schemas.api.RegisterUserIn">RegisterUserIn</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Creates <code><a title="shopapi.schemas.api.RegisterUserIn" href="#shopapi.schemas.api.RegisterUserIn">RegisterUserIn</a></code> instance from <code><a title="shopapi.schemas.api.LoginUserIn" href="#shopapi.schemas.api.LoginUserIn">LoginUserIn</a></code> instance.
+It basically only hashes the password</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def from_plain(plain_user: LoginUserIn) -&gt; &#34;RegisterUserIn&#34;:
+    &#34;&#34;&#34;Creates `RegisterUserIn` instance from `LoginUserIn` instance.
+    It basically only hashes the password
+    &#34;&#34;&#34;
+    phash = security.get_password_hash(plain_user.password)
+    return RegisterUserIn(email=plain_user.email, password=phash)</code></pre>
+</details>
 </dd>
 </dl>
 </dd>
@@ -112,6 +193,14 @@ class LoginUserIn(BaseModel):
 <ul class="">
 <li><code><a title="shopapi.schemas.api.LoginUserIn.email" href="#shopapi.schemas.api.LoginUserIn.email">email</a></code></li>
 <li><code><a title="shopapi.schemas.api.LoginUserIn.password" href="#shopapi.schemas.api.LoginUserIn.password">password</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="shopapi.schemas.api.RegisterUserIn" href="#shopapi.schemas.api.RegisterUserIn">RegisterUserIn</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.api.RegisterUserIn.email" href="#shopapi.schemas.api.RegisterUserIn.email">email</a></code></li>
+<li><code><a title="shopapi.schemas.api.RegisterUserIn.from_plain" href="#shopapi.schemas.api.RegisterUserIn.from_plain">from_plain</a></code></li>
+<li><code><a title="shopapi.schemas.api.RegisterUserIn.password" href="#shopapi.schemas.api.RegisterUserIn.password">password</a></code></li>
 </ul>
 </li>
 </ul>

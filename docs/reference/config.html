@@ -42,6 +42,7 @@ class ConfigProxy(config_proxy.ConfigProxy):
 
     env_location: str = &#34;SHOPAPI_CONFIG&#34;
     config_file_names: List[str] = [&#34;config.json&#34;, &#34;shopapi.json&#34;]
+    strict = False
 
 
 class StringProperty(config_proxy.StringProperty):
@@ -129,8 +130,11 @@ def build_db_url() -&gt; str:
     &#34;&#34;&#34;Build DB tortoise orm url for connection from Config object&#34;&#34;&#34;
     if Config.Database.backend == &#34;sqlite&#34;:
         return f&#34;sqlite://{Config.Database.host}&#34;
-    elif Config.Database.backend == &#34;postgres&#34;:
-        return f&#34;postgres://{Config.Database.user}:{Config.Database.password}@{Config.Database.host}/{Config.Database.database}&#34;
+    if Config.Database.backend == &#34;postgres&#34;:
+        return (
+            f&#34;postgres://{Config.Database.user}:{Config.Database.password}&#34;
+            f&#34;@{Config.Database.host}/{Config.Database.database}&#34;
+        )
     raise NotImplementedError(f&#34;DB Backend {Config.Database.backend} is not implemented&#34;)</code></pre>
 </details>
 </section>
@@ -154,8 +158,11 @@ def build_db_url() -&gt; str:
     &#34;&#34;&#34;Build DB tortoise orm url for connection from Config object&#34;&#34;&#34;
     if Config.Database.backend == &#34;sqlite&#34;:
         return f&#34;sqlite://{Config.Database.host}&#34;
-    elif Config.Database.backend == &#34;postgres&#34;:
-        return f&#34;postgres://{Config.Database.user}:{Config.Database.password}@{Config.Database.host}/{Config.Database.database}&#34;
+    if Config.Database.backend == &#34;postgres&#34;:
+        return (
+            f&#34;postgres://{Config.Database.user}:{Config.Database.password}&#34;
+            f&#34;@{Config.Database.host}/{Config.Database.database}&#34;
+        )
     raise NotImplementedError(f&#34;DB Backend {Config.Database.backend} is not implemented&#34;)</code></pre>
 </details>
 </dd>
@@ -302,7 +309,7 @@ an environmental variable or specified default</p></div>
 </dd>
 <dt id="shopapi.config.ConfigProxy"><code class="flex name class">
 <span>class <span class="ident">ConfigProxy</span></span>
-<span>(</span><span>config_path: str)</span>
+<span>(</span><span>config_path: Optional[str])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>ConfigProxy</p>
@@ -324,7 +331,8 @@ or use <code>get_config</code> static method.</p>
     &#34;&#34;&#34;ConfigProxy&#34;&#34;&#34;
 
     env_location: str = &#34;SHOPAPI_CONFIG&#34;
-    config_file_names: List[str] = [&#34;config.json&#34;, &#34;shopapi.json&#34;]</code></pre>
+    config_file_names: List[str] = [&#34;config.json&#34;, &#34;shopapi.json&#34;]
+    strict = False</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -341,6 +349,10 @@ or use <code>get_config</code> static method.</p>
 <div class="desc"></div>
 </dd>
 <dt id="shopapi.config.ConfigProxy.env_location"><code class="name">var <span class="ident">env_location</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.config.ConfigProxy.strict"><code class="name">var <span class="ident">strict</span> : bool</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -479,6 +491,7 @@ or use <code>get_config</code> static method.</p>
 <li><code><a title="shopapi.config.ConfigProxy.config_file_names" href="#shopapi.config.ConfigProxy.config_file_names">config_file_names</a></code></li>
 <li><code><a title="shopapi.config.ConfigProxy.current_config" href="#shopapi.config.ConfigProxy.current_config">current_config</a></code></li>
 <li><code><a title="shopapi.config.ConfigProxy.env_location" href="#shopapi.config.ConfigProxy.env_location">env_location</a></code></li>
+<li><code><a title="shopapi.config.ConfigProxy.strict" href="#shopapi.config.ConfigProxy.strict">strict</a></code></li>
 </ul>
 </li>
 <li>

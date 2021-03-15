@@ -45,20 +45,21 @@ class ORMModel(BaseModel):
         orm_mode = True
 
 
-class UserFromDB(ORMModel):
-    &#34;&#34;&#34;UserFromDB&#34;&#34;&#34;
+class UserDBInput(ORMModel):
+    &#34;&#34;&#34;User input to be loaded into DB&#34;&#34;&#34;
 
-    id: int
+    id: Optional[int]
     email: EmailStr
     first_name: Optional[str]
     last_name: Optional[str]
     picture: Optional[str]
+    password: bytes
 
 
-class UserDBInput(UserFromDB):
-    &#34;&#34;&#34;User input to be loaded into DB&#34;&#34;&#34;
+class UserFromDB(UserDBInput):
+    &#34;&#34;&#34;UserFromDB&#34;&#34;&#34;
 
-    id: Optional[int]
+    id: int
 
 
 class UserToken(BaseModel):
@@ -153,7 +154,7 @@ class OpenIDFromDB(ORMModel, OpenID):
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="shopapi.schemas.schemas.OpenIDFromDB" href="#shopapi.schemas.schemas.OpenIDFromDB">OpenIDFromDB</a></li>
-<li><a title="shopapi.schemas.schemas.UserFromDB" href="#shopapi.schemas.schemas.UserFromDB">UserFromDB</a></li>
+<li><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -323,30 +324,58 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class UserDBInput(UserFromDB):
+<pre><code class="python">class UserDBInput(ORMModel):
     &#34;&#34;&#34;User input to be loaded into DB&#34;&#34;&#34;
 
-    id: Optional[int]</code></pre>
+    id: Optional[int]
+    email: EmailStr
+    first_name: Optional[str]
+    last_name: Optional[str]
+    picture: Optional[str]
+    password: bytes</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="shopapi.schemas.schemas.UserFromDB" href="#shopapi.schemas.schemas.UserFromDB">UserFromDB</a></li>
 <li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.schemas.UserFromDB" href="#shopapi.schemas.schemas.UserFromDB">UserFromDB</a></li>
+</ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="shopapi.schemas.schemas.UserDBInput.email"><code class="name">var <span class="ident">email</span> : pydantic.networks.EmailStr</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.UserDBInput.first_name"><code class="name">var <span class="ident">first_name</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="shopapi.schemas.schemas.UserDBInput.id"><code class="name">var <span class="ident">id</span> : Optional[int]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.UserDBInput.last_name"><code class="name">var <span class="ident">last_name</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.UserDBInput.password"><code class="name">var <span class="ident">password</span> : bytes</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.UserDBInput.picture"><code class="name">var <span class="ident">picture</span> : Optional[str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="shopapi.schemas.schemas.UserFromDB" href="#shopapi.schemas.schemas.UserFromDB">UserFromDB</a></b></code>:
+<li><code><b><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></b></code>:
 <ul class="hlist">
-<li><code><a title="shopapi.schemas.schemas.UserFromDB.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.ORMModel.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
 </ul>
 </li>
 </ul>
@@ -363,53 +392,30 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class UserFromDB(ORMModel):
+<pre><code class="python">class UserFromDB(UserDBInput):
     &#34;&#34;&#34;UserFromDB&#34;&#34;&#34;
 
-    id: int
-    email: EmailStr
-    first_name: Optional[str]
-    last_name: Optional[str]
-    picture: Optional[str]</code></pre>
+    id: int</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></li>
 <li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></li>
-</ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="shopapi.schemas.schemas.UserFromDB.email"><code class="name">var <span class="ident">email</span> : pydantic.networks.EmailStr</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="shopapi.schemas.schemas.UserFromDB.first_name"><code class="name">var <span class="ident">first_name</span> : Optional[str]</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt id="shopapi.schemas.schemas.UserFromDB.id"><code class="name">var <span class="ident">id</span> : int</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="shopapi.schemas.schemas.UserFromDB.last_name"><code class="name">var <span class="ident">last_name</span> : Optional[str]</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="shopapi.schemas.schemas.UserFromDB.picture"><code class="name">var <span class="ident">picture</span> : Optional[str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></b></code>:
+<li><code><b><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></b></code>:
 <ul class="hlist">
-<li><code><a title="shopapi.schemas.schemas.ORMModel.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
 </ul>
 </li>
 </ul>
@@ -456,6 +462,10 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
 <ul class="hlist">
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li>pydantic.main.UserToken</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -565,18 +575,19 @@ def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
 </li>
 <li>
 <h4><code><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></code></h4>
-<ul class="">
+<ul class="two-column">
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.email" href="#shopapi.schemas.schemas.UserDBInput.email">email</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.first_name" href="#shopapi.schemas.schemas.UserDBInput.first_name">first_name</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.UserDBInput.id" href="#shopapi.schemas.schemas.UserDBInput.id">id</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.last_name" href="#shopapi.schemas.schemas.UserDBInput.last_name">last_name</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.password" href="#shopapi.schemas.schemas.UserDBInput.password">password</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.picture" href="#shopapi.schemas.schemas.UserDBInput.picture">picture</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="shopapi.schemas.schemas.UserFromDB" href="#shopapi.schemas.schemas.UserFromDB">UserFromDB</a></code></h4>
 <ul class="">
-<li><code><a title="shopapi.schemas.schemas.UserFromDB.email" href="#shopapi.schemas.schemas.UserFromDB.email">email</a></code></li>
-<li><code><a title="shopapi.schemas.schemas.UserFromDB.first_name" href="#shopapi.schemas.schemas.UserFromDB.first_name">first_name</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.UserFromDB.id" href="#shopapi.schemas.schemas.UserFromDB.id">id</a></code></li>
-<li><code><a title="shopapi.schemas.schemas.UserFromDB.last_name" href="#shopapi.schemas.schemas.UserFromDB.last_name">last_name</a></code></li>
-<li><code><a title="shopapi.schemas.schemas.UserFromDB.picture" href="#shopapi.schemas.schemas.UserFromDB.picture">picture</a></code></li>
 </ul>
 </li>
 <li>
