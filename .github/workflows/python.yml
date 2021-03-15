@@ -1,4 +1,4 @@
-name: lint
+name: python
 
 on:
   push:
@@ -7,8 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  lint:
-
+  python:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -28,3 +27,8 @@ jobs:
       run: poe pylint
     - name: Lint with mypy
       run: poe mypy
+    - name: Generate documentation
+      run: |
+        poe docs
+        mkdir -p ./public
+        cp -r ./docs/* ./public/
