@@ -13,6 +13,7 @@ class ConfigProxy(config_proxy.ConfigProxy):
 
     env_location: str = "SHOPAPI_CONFIG"
     config_file_names: List[str] = ["config.json", "shopapi.json"]
+    strict = False
 
 
 class StringProperty(config_proxy.StringProperty):
