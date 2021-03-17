@@ -32,7 +32,7 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, status, Cookie
-from shopapi.helpers import dependencies, exceptions
+from shopapi.helpers import dependencies as deps, exceptions
 from shopapi.schemas import models, schemas, api
 from shopapi import actions
 
@@ -40,9 +40,15 @@ router = APIRouter(prefix=&#34;/user&#34;, tags=[&#34;user&#34;])
 
 
 @router.get(&#34;/me&#34;, response_model=schemas.UserToken)
-async def user_info(user: schemas.UserToken = Depends(dependencies.get_user)):
+async def user_info(user: schemas.UserToken = Depends(deps.get_user)):
     &#34;&#34;&#34;Return user information&#34;&#34;&#34;
     return user
+
+
+@router.get(&#34;/role&#34;, response_model=schemas.Role, dependencies=[Depends(deps.get_user)])
+async def user_role(role: schemas.Role = Depends(deps.get_user_role)):
+    &#34;&#34;&#34;Get user&#39;s role and return it&#34;&#34;&#34;
+    return role
 
 
 @router.post(&#34;/&#34;)
@@ -57,7 +63,21 @@ async def user_create(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie
     userdb = schemas.UserFromDB.from_orm(user_model)
     response = await actions.user.login_user(userdb, redirect_to=redirect_to)
     response.status_code = status.HTTP_201_CREATED
-    return response</code></pre>
+    return response
+
+
+@router.delete(&#34;/{user_id}&#34;)
+async def user_delete(
+    user_id: int, user: schemas.UserToken = Depends(deps.get_user), role: schemas.Role = Depends(deps.get_user_role)
+):
+    &#34;&#34;&#34;Delete user.
+    Only works if current user is deleting themselves or they have users.DELETE
+
+    Required permissions:
+        - users.delete
+    &#34;&#34;&#34;
+    if user.id != user_id and not role.users.delete:
+        raise exceptions.InsufficientPermissions(&#34;users.delete&#34;)</code></pre>
 </details>
 </section>
 <section>
@@ -91,6 +111,32 @@ async def user_create(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie
     return response</code></pre>
 </details>
 </dd>
+<dt id="shopapi.routers.user.user_delete"><code class="name flex">
+<span>async def <span class="ident">user_delete</span></span>(<span>user_id: int, user: <a title="shopapi.schemas.schemas.UserToken" href="../schemas/schemas.html#shopapi.schemas.schemas.UserToken">UserToken</a> = Depends(get_user), role: <a title="shopapi.schemas.schemas.Role" href="../schemas/schemas.html#shopapi.schemas.schemas.Role">Role</a> = Depends(get_user_role))</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete user.
+Only works if current user is deleting themselves or they have users.DELETE</p>
+<p>Required permissions:
+- users.delete</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@router.delete(&#34;/{user_id}&#34;)
+async def user_delete(
+    user_id: int, user: schemas.UserToken = Depends(deps.get_user), role: schemas.Role = Depends(deps.get_user_role)
+):
+    &#34;&#34;&#34;Delete user.
+    Only works if current user is deleting themselves or they have users.DELETE
+
+    Required permissions:
+        - users.delete
+    &#34;&#34;&#34;
+    if user.id != user_id and not role.users.delete:
+        raise exceptions.InsufficientPermissions(&#34;users.delete&#34;)</code></pre>
+</details>
+</dd>
 <dt id="shopapi.routers.user.user_info"><code class="name flex">
 <span>async def <span class="ident">user_info</span></span>(<span>user: <a title="shopapi.schemas.schemas.UserToken" href="../schemas/schemas.html#shopapi.schemas.schemas.UserToken">UserToken</a> = Depends(get_user))</span>
 </code></dt>
@@ -101,9 +147,24 @@ async def user_create(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@router.get(&#34;/me&#34;, response_model=schemas.UserToken)
-async def user_info(user: schemas.UserToken = Depends(dependencies.get_user)):
+async def user_info(user: schemas.UserToken = Depends(deps.get_user)):
     &#34;&#34;&#34;Return user information&#34;&#34;&#34;
     return user</code></pre>
+</details>
+</dd>
+<dt id="shopapi.routers.user.user_role"><code class="name flex">
+<span>async def <span class="ident">user_role</span></span>(<span>role: <a title="shopapi.schemas.schemas.Role" href="../schemas/schemas.html#shopapi.schemas.schemas.Role">Role</a> = Depends(get_user_role))</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get user's role and return it</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@router.get(&#34;/role&#34;, response_model=schemas.Role, dependencies=[Depends(deps.get_user)])
+async def user_role(role: schemas.Role = Depends(deps.get_user_role)):
+    &#34;&#34;&#34;Get user&#39;s role and return it&#34;&#34;&#34;
+    return role</code></pre>
 </details>
 </dd>
 </dl>
@@ -125,7 +186,9 @@ async def user_info(user: schemas.UserToken = Depends(dependencies.get_user)):
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="shopapi.routers.user.user_create" href="#shopapi.routers.user.user_create">user_create</a></code></li>
+<li><code><a title="shopapi.routers.user.user_delete" href="#shopapi.routers.user.user_delete">user_delete</a></code></li>
 <li><code><a title="shopapi.routers.user.user_info" href="#shopapi.routers.user.user_info">user_info</a></code></li>
+<li><code><a title="shopapi.routers.user.user_role" href="#shopapi.routers.user.user_role">user_role</a></code></li>
 </ul>
 </li>
 </ul>

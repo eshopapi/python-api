@@ -31,6 +31,7 @@
 
 from typing import Optional
 from fastapi import HTTPException, status
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 from shopapi.config import Config
 
@@ -118,7 +119,32 @@ class ResourceExistsException(HTTPException):
             &#34;Resource you are trying to create either already exists &#34;
             &#34;or another resource exists that matches your resource&#39;s signature&#34;
         )
-        super().__init__(status_code=status_code, detail=detail)</code></pre>
+        super().__init__(status_code=status_code, detail=detail)
+
+
+class InvalidOperation(HTTPException):
+    &#34;&#34;&#34;Raised whenever there was an attempt to do something that doesn&#39;t make any sense&#34;&#34;&#34;
+
+    def __init__(self, status_code: Optional[int] = status.HTTP_400_BAD_REQUEST, detail: Optional[str] = None):
+        status_code = status_code or status.HTTP_400_BAD_REQUEST
+        detail = detail or &#34;The action you are trying to perform does not make sense in the current context&#34;
+        super().__init__(status_code=status_code, detail=detail)
+
+
+class InsufficientPermissions(HTTPException):
+    &#34;&#34;&#34;Raised whenever somebody attempts to do something they are not allowed to&#34;&#34;&#34;
+
+    def __init__(self, required: Optional[str] = None):
+        required = required or &#34;unknown&#34;
+        detail = f&#34;You do not have sufficent permissions to perform this action. You need &#39;{required}&#39; permission.&#34;
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+
+class CredentialsExpired(HTTPException):
+    &#34;&#34;&#34;Raised when credentials in token expire&#34;&#34;&#34;
+
+    def __init__(self):
+        super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail=&#34;Credentials expired&#34;)</code></pre>
 </details>
 </section>
 <section>
@@ -175,6 +201,81 @@ class ResourceExistsException(HTTPException):
             detail=&#34;Could not validate credentials&#34;,
             headers={&#34;WWW-Authenticate&#34;: &#34;Bearer&#34;},
         )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>fastapi.exceptions.HTTPException</li>
+<li>starlette.exceptions.HTTPException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="shopapi.helpers.exceptions.CredentialsExpired"><code class="flex name class">
+<span>class <span class="ident">CredentialsExpired</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised when credentials in token expire</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CredentialsExpired(HTTPException):
+    &#34;&#34;&#34;Raised when credentials in token expire&#34;&#34;&#34;
+
+    def __init__(self):
+        super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail=&#34;Credentials expired&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>fastapi.exceptions.HTTPException</li>
+<li>starlette.exceptions.HTTPException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="shopapi.helpers.exceptions.InsufficientPermissions"><code class="flex name class">
+<span>class <span class="ident">InsufficientPermissions</span></span>
+<span>(</span><span>required: Optional[str] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised whenever somebody attempts to do something they are not allowed to</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class InsufficientPermissions(HTTPException):
+    &#34;&#34;&#34;Raised whenever somebody attempts to do something they are not allowed to&#34;&#34;&#34;
+
+    def __init__(self, required: Optional[str] = None):
+        required = required or &#34;unknown&#34;
+        detail = f&#34;You do not have sufficent permissions to perform this action. You need &#39;{required}&#39; permission.&#34;
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>fastapi.exceptions.HTTPException</li>
+<li>starlette.exceptions.HTTPException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="shopapi.helpers.exceptions.InvalidOperation"><code class="flex name class">
+<span>class <span class="ident">InvalidOperation</span></span>
+<span>(</span><span>status_code: Optional[int] = 400, detail: Optional[str] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised whenever there was an attempt to do something that doesn't make any sense</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class InvalidOperation(HTTPException):
+    &#34;&#34;&#34;Raised whenever there was an attempt to do something that doesn&#39;t make any sense&#34;&#34;&#34;
+
+    def __init__(self, status_code: Optional[int] = status.HTTP_400_BAD_REQUEST, detail: Optional[str] = None):
+        status_code = status_code or status.HTTP_400_BAD_REQUEST
+        detail = detail or &#34;The action you are trying to perform does not make sense in the current context&#34;
+        super().__init__(status_code=status_code, detail=detail)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -376,6 +477,15 @@ class ResourceExistsException(HTTPException):
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.CredentialsException" href="#shopapi.helpers.exceptions.CredentialsException">CredentialsException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="shopapi.helpers.exceptions.CredentialsExpired" href="#shopapi.helpers.exceptions.CredentialsExpired">CredentialsExpired</a></code></h4>
+</li>
+<li>
+<h4><code><a title="shopapi.helpers.exceptions.InsufficientPermissions" href="#shopapi.helpers.exceptions.InsufficientPermissions">InsufficientPermissions</a></code></h4>
+</li>
+<li>
+<h4><code><a title="shopapi.helpers.exceptions.InvalidOperation" href="#shopapi.helpers.exceptions.InvalidOperation">InvalidOperation</a></code></h4>
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.LoginError" href="#shopapi.helpers.exceptions.LoginError">LoginError</a></code></h4>

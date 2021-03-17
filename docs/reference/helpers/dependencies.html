@@ -32,8 +32,9 @@
 from typing import Optional
 from fastapi import Cookie, Header, Depends
 
+from shopapi.config import Config
 from shopapi.helpers import exceptions, security
-from shopapi.schemas import schemas
+from shopapi.schemas import schemas, models
 
 
 async def get_user_token(
@@ -65,7 +66,17 @@ async def get_user_token_strict(token: Optional[str] = Depends(get_user_token)) 
 async def get_user(token: str = Depends(get_user_token_strict)) -&gt; schemas.UserToken:
     &#34;&#34;&#34;Get user information schema from the decoded token info&#34;&#34;&#34;
     token_info = await security.decode_jwt(token)
-    return schemas.UserToken.from_token(token_info)</code></pre>
+    return schemas.UserToken.from_token(token_info)
+
+
+async def get_user_role(user: schemas.UserToken = Depends(get_user)) -&gt; schemas.Role:
+    &#34;&#34;&#34;Get user&#39;s role&#34;&#34;&#34;
+    role_db = await models.Role.get(id=user.role_id)
+    if not role_db:
+        raise exceptions.UnexpectedException(
+            detail=f&#34;We were unable to retrieve your user information. Please contact us at {Config.support_contact}&#34;
+        )
+    return schemas.Role.from_orm(role_db)</code></pre>
 </details>
 </section>
 <section>
@@ -88,6 +99,25 @@ async def get_user(token: str = Depends(get_user_token_strict)) -&gt; schemas.Us
     &#34;&#34;&#34;Get user information schema from the decoded token info&#34;&#34;&#34;
     token_info = await security.decode_jwt(token)
     return schemas.UserToken.from_token(token_info)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.helpers.dependencies.get_user_role"><code class="name flex">
+<span>async def <span class="ident">get_user_role</span></span>(<span>user: <a title="shopapi.schemas.schemas.UserToken" href="../schemas/schemas.html#shopapi.schemas.schemas.UserToken">UserToken</a> = Depends(get_user)) ‑> <a title="shopapi.schemas.schemas.Role" href="../schemas/schemas.html#shopapi.schemas.schemas.Role">Role</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get user's role</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def get_user_role(user: schemas.UserToken = Depends(get_user)) -&gt; schemas.Role:
+    &#34;&#34;&#34;Get user&#39;s role&#34;&#34;&#34;
+    role_db = await models.Role.get(id=user.role_id)
+    if not role_db:
+        raise exceptions.UnexpectedException(
+            detail=f&#34;We were unable to retrieve your user information. Please contact us at {Config.support_contact}&#34;
+        )
+    return schemas.Role.from_orm(role_db)</code></pre>
 </details>
 </dd>
 <dt id="shopapi.helpers.dependencies.get_user_token"><code class="name flex">
@@ -154,6 +184,7 @@ Raises error if no token is found</p></div>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="shopapi.helpers.dependencies.get_user" href="#shopapi.helpers.dependencies.get_user">get_user</a></code></li>
+<li><code><a title="shopapi.helpers.dependencies.get_user_role" href="#shopapi.helpers.dependencies.get_user_role">get_user_role</a></code></li>
 <li><code><a title="shopapi.helpers.dependencies.get_user_token" href="#shopapi.helpers.dependencies.get_user_token">get_user_token</a></code></li>
 <li><code><a title="shopapi.helpers.dependencies.get_user_token_strict" href="#shopapi.helpers.dependencies.get_user_token_strict">get_user_token_strict</a></code></li>
 </ul>

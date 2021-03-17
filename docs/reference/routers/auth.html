@@ -41,9 +41,9 @@ from fastapi_sso.sso.google import GoogleSSO
 from fastapi_sso.sso.facebook import FacebookSSO
 from fastapi_sso.sso.microsoft import MicrosoftSSO
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
-from shopapi import schemas
+from shopapi.schemas import schemas, api
 from shopapi.config import Config
 from shopapi.helpers import exceptions, dependencies, security
 from shopapi import actions
@@ -81,13 +81,26 @@ def _provider_factory(provider: str) -&gt; SSOBase:
 
 
 @router.post(&#34;/login&#34;)
-async def auth_login(user: schemas.api.LoginUserIn):
+async def auth_login(user: api.LoginUserIn, permanent: bool = False):
     &#34;&#34;&#34;Login using username / password&#34;&#34;&#34;
     db_user = await actions.user.get_user_by_email(user.email)
     if db_user is None:
         raise exceptions.AuthenticationException()
+    if db_user.password is None:
+        raise exceptions.AuthenticationException()
     if not security.verify_password(user.password, db_user.password.decode(&#34;ascii&#34;)):
         raise exceptions.AuthenticationException()
+    return await actions.user.login_user(db_user, permanent=permanent)
+
+
+@router.get(&#34;/logout&#34;)
+async def auth_logout():
+    &#34;&#34;&#34;Logout active user (delete their token from browser&#39;s cookies)&#34;&#34;&#34;
+    response = RedirectResponse(Config.base_url)
+    response.delete_cookie(&#34;sessiontoken&#34;)
+    response.delete_cookie(&#34;ssostate&#34;)
+    response.delete_cookie(&#34;ssoaction&#34;)
+    return response
 
 
 @router.get(&#34;/sso/{provider}/login&#34;)
@@ -110,7 +123,7 @@ async def auth_sso_callback(
     openidsso = await sso.verify_and_process(request)
     if openidsso is None:
         raise exceptions.AuthenticationException()
-    openid = schemas.schemas.OpenID.from_sso(openidsso)
+    openid = schemas.OpenID.from_sso(openidsso)
     if ssoaction == &#34;add-provider&#34;:
         if not token:
             raise exceptions.AuthenticationException()
@@ -129,12 +142,12 @@ async def auth_sso_callback(
 
 
 @router.get(&#34;/sso/{provider}/add&#34;)
-async def auth_sso_add(provider: str, user: schemas.schemas.UserToken = Depends(dependencies.get_user)):
+async def auth_sso_add(provider: str, user: schemas.UserToken = Depends(dependencies.get_user)):
     &#34;&#34;&#34;Begin flow for adding another provider to existing user&#34;&#34;&#34;
     logger.info(&#34;Requesting to add provider %s for user %d - %s&#34;, provider, user.id, user.email)
     sso = _provider_factory(provider)
     response = await sso.get_login_redirect()
-    response.set_cookie(&#34;ssoaction&#34;, &#34;add-provider&#34;)
+    response.set_cookie(&#34;ssoaction&#34;, &#34;add-provider&#34;, expires=300)
     return response</code></pre>
 </details>
 </section>
@@ -146,7 +159,7 @@ async def auth_sso_add(provider: str, user: schemas.schemas.UserToken = Depends(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="shopapi.routers.auth.auth_login"><code class="name flex">
-<span>async def <span class="ident">auth_login</span></span>(<span>user: <a title="shopapi.schemas.api.LoginUserIn" href="../schemas/api.html#shopapi.schemas.api.LoginUserIn">LoginUserIn</a>)</span>
+<span>async def <span class="ident">auth_login</span></span>(<span>user: <a title="shopapi.schemas.api.LoginUserIn" href="../schemas/api.html#shopapi.schemas.api.LoginUserIn">LoginUserIn</a>, permanent: bool = False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Login using username / password</p></div>
@@ -155,13 +168,35 @@ async def auth_sso_add(provider: str, user: schemas.schemas.UserToken = Depends(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@router.post(&#34;/login&#34;)
-async def auth_login(user: schemas.api.LoginUserIn):
+async def auth_login(user: api.LoginUserIn, permanent: bool = False):
     &#34;&#34;&#34;Login using username / password&#34;&#34;&#34;
     db_user = await actions.user.get_user_by_email(user.email)
     if db_user is None:
         raise exceptions.AuthenticationException()
+    if db_user.password is None:
+        raise exceptions.AuthenticationException()
     if not security.verify_password(user.password, db_user.password.decode(&#34;ascii&#34;)):
-        raise exceptions.AuthenticationException()</code></pre>
+        raise exceptions.AuthenticationException()
+    return await actions.user.login_user(db_user, permanent=permanent)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.routers.auth.auth_logout"><code class="name flex">
+<span>async def <span class="ident">auth_logout</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Logout active user (delete their token from browser's cookies)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@router.get(&#34;/logout&#34;)
+async def auth_logout():
+    &#34;&#34;&#34;Logout active user (delete their token from browser&#39;s cookies)&#34;&#34;&#34;
+    response = RedirectResponse(Config.base_url)
+    response.delete_cookie(&#34;sessiontoken&#34;)
+    response.delete_cookie(&#34;ssostate&#34;)
+    response.delete_cookie(&#34;ssoaction&#34;)
+    return response</code></pre>
 </details>
 </dd>
 <dt id="shopapi.routers.auth.auth_sso_add"><code class="name flex">
@@ -174,12 +209,12 @@ async def auth_login(user: schemas.api.LoginUserIn):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@router.get(&#34;/sso/{provider}/add&#34;)
-async def auth_sso_add(provider: str, user: schemas.schemas.UserToken = Depends(dependencies.get_user)):
+async def auth_sso_add(provider: str, user: schemas.UserToken = Depends(dependencies.get_user)):
     &#34;&#34;&#34;Begin flow for adding another provider to existing user&#34;&#34;&#34;
     logger.info(&#34;Requesting to add provider %s for user %d - %s&#34;, provider, user.id, user.email)
     sso = _provider_factory(provider)
     response = await sso.get_login_redirect()
-    response.set_cookie(&#34;ssoaction&#34;, &#34;add-provider&#34;)
+    response.set_cookie(&#34;ssoaction&#34;, &#34;add-provider&#34;, expires=300)
     return response</code></pre>
 </details>
 </dd>
@@ -205,7 +240,7 @@ async def auth_sso_callback(
     openidsso = await sso.verify_and_process(request)
     if openidsso is None:
         raise exceptions.AuthenticationException()
-    openid = schemas.schemas.OpenID.from_sso(openidsso)
+    openid = schemas.OpenID.from_sso(openidsso)
     if ssoaction == &#34;add-provider&#34;:
         if not token:
             raise exceptions.AuthenticationException()
@@ -258,6 +293,7 @@ async def auth_sso_login(provider: str):
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="shopapi.routers.auth.auth_login" href="#shopapi.routers.auth.auth_login">auth_login</a></code></li>
+<li><code><a title="shopapi.routers.auth.auth_logout" href="#shopapi.routers.auth.auth_logout">auth_logout</a></code></li>
 <li><code><a title="shopapi.routers.auth.auth_sso_add" href="#shopapi.routers.auth.auth_sso_add">auth_sso_add</a></code></li>
 <li><code><a title="shopapi.routers.auth.auth_sso_callback" href="#shopapi.routers.auth.auth_sso_callback">auth_sso_callback</a></code></li>
 <li><code><a title="shopapi.routers.auth.auth_sso_login" href="#shopapi.routers.auth.auth_sso_login">auth_sso_login</a></code></li>

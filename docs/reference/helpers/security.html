@@ -79,6 +79,7 @@ def create_access_token(
         &#34;exp&#34;: datetime.utcnow() + expires,
         &#34;pvd&#34;: openid.provider if openid else &#34;password&#34;,
         &#34;pid&#34;: openid.provider_id if openid else None,
+        &#34;rid&#34;: user.role_id,
     }
     jwt_content = jwt.encode(data, Config.secret_key, algorithm=constants.JWT_ALGORITHM)
     return jwt_content
@@ -88,6 +89,9 @@ async def decode_jwt(token: str) -&gt; Mapping:
     &#34;&#34;&#34;Get token info from token&#34;&#34;&#34;
     try:
         payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
+        expires = datetime.fromtimestamp(float(payload.get(&#34;exp&#34;, 0)))
+        if datetime.utcnow() &gt;= expires:
+            raise exceptions.CredentialsExpired()
         return payload
     except JWTError as error:
         logger.error(error)
@@ -107,14 +111,10 @@ async def user_from_jwt(token: str) -&gt; schemas.UserFromDB:
     Returns:
         models.User -- User from DB
     &#34;&#34;&#34;
-    try:
-        payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
-        user_id = payload.get(&#34;sub&#34;)
-        if user_id is None:
-            raise exceptions.CredentialsException()
-    except JWTError as error:
-        logger.error(error)
-        raise exceptions.CredentialsException()  # pylint: disable=raise-missing-from
+    payload = await decode_jwt(token)
+    user_id = payload.get(&#34;sub&#34;)
+    if user_id is None:
+        raise exceptions.CredentialsException()
     user = await models.User.get(user_id)
     if user is None:
         raise exceptions.CredentialsException()
@@ -156,6 +156,7 @@ Optional <code>expires</code> specifies when the token expires, otherwise, defau
         &#34;exp&#34;: datetime.utcnow() + expires,
         &#34;pvd&#34;: openid.provider if openid else &#34;password&#34;,
         &#34;pid&#34;: openid.provider_id if openid else None,
+        &#34;rid&#34;: user.role_id,
     }
     jwt_content = jwt.encode(data, Config.secret_key, algorithm=constants.JWT_ALGORITHM)
     return jwt_content</code></pre>
@@ -174,6 +175,9 @@ Optional <code>expires</code> specifies when the token expires, otherwise, defau
     &#34;&#34;&#34;Get token info from token&#34;&#34;&#34;
     try:
         payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
+        expires = datetime.fromtimestamp(float(payload.get(&#34;exp&#34;, 0)))
+        if datetime.utcnow() &gt;= expires:
+            raise exceptions.CredentialsExpired()
         return payload
     except JWTError as error:
         logger.error(error)
@@ -226,14 +230,10 @@ invalid or the user specified within does not exist</dd>
     Returns:
         models.User -- User from DB
     &#34;&#34;&#34;
-    try:
-        payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
-        user_id = payload.get(&#34;sub&#34;)
-        if user_id is None:
-            raise exceptions.CredentialsException()
-    except JWTError as error:
-        logger.error(error)
-        raise exceptions.CredentialsException()  # pylint: disable=raise-missing-from
+    payload = await decode_jwt(token)
+    user_id = payload.get(&#34;sub&#34;)
+    if user_id is None:
+        raise exceptions.CredentialsException()
     user = await models.User.get(user_id)
     if user is None:
         raise exceptions.CredentialsException()

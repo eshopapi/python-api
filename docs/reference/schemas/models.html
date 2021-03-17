@@ -30,11 +30,14 @@
 <pre><code class="python">&#34;&#34;&#34;Database models for Tortoise-ORM operations
 &#34;&#34;&#34;
 
+from typing import Optional
 from tortoise import fields
 from tortoise.models import Model
 
+from shopapi.config import build_db_url
+
 TORTOISE_ORM = {
-    &#34;connections&#34;: {&#34;default&#34;: &#34;sqlite://db.sqlite3&#34;},
+    &#34;connections&#34;: {&#34;default&#34;: build_db_url()},
     &#34;apps&#34;: {
         &#34;models&#34;: {
             &#34;models&#34;: [&#34;shopapi.schemas.models&#34;, &#34;aerich.models&#34;],
@@ -42,6 +45,16 @@ TORTOISE_ORM = {
         },
     },
 }
+
+
+def strbool(val: bool) -&gt; str:
+    &#34;&#34;&#34;Return boolean as a string&#34;&#34;&#34;
+    return &#34;true&#34; if val else &#34;false&#34;
+
+
+def boolstr(val: str) -&gt; bool:
+    &#34;&#34;&#34;Return string as a boolean&#34;&#34;&#34;
+    return val.lower() in [&#34;yes&#34;, &#34;true&#34;, &#34;1&#34;]
 
 
 class BaseModel(Model):
@@ -53,6 +66,48 @@ class BaseModel(Model):
     deleted = fields.BooleanField(default=False)
 
 
+class Shop(BaseModel):
+    &#34;&#34;&#34;Shop&#34;&#34;&#34;
+
+    key = fields.CharField(unique=True, max_length=32, index=True)
+    value = fields.CharField(max_length=1024, null=True)  # type: str
+
+    @classmethod
+    async def get_settings(cls, key: str) -&gt; Optional[&#34;Shop&#34;]:
+        &#34;&#34;&#34;Get settings by key&#34;&#34;&#34;
+        dbmod = await cls.filter(key=key).first()
+        if not dbmod:
+            return None
+        return dbmod
+
+    @classmethod
+    async def is_initialized(cls) -&gt; bool:
+        &#34;&#34;&#34;Returns True if the Shop has already been initialized&#34;&#34;&#34;
+        dbmod = await cls.get_settings(&#34;initialized&#34;)
+        if dbmod is None or dbmod.value is None:
+            return False
+        return boolstr(dbmod.value)
+
+    @classmethod
+    async def set_initialized(cls, val: bool = True):
+        &#34;&#34;&#34;Set initialized flag&#34;&#34;&#34;
+        dbmod = await cls.get_settings(&#34;initialized&#34;)
+        if dbmod is None:
+            await cls.create(key=&#34;initialized&#34;, value=strbool(val))
+        else:
+            dbmod.value = strbool(val)
+            await dbmod.save()
+
+
+class Role(BaseModel):
+    &#34;&#34;&#34;Role&#34;&#34;&#34;
+
+    title = fields.CharField(unique=True, max_length=64)
+    roles = fields.IntField()
+    assigned_users: fields.ReverseRelation[&#34;User&#34;]
+    users = fields.IntField()
+
+
 class User(BaseModel):
     &#34;&#34;&#34;User&#34;&#34;&#34;
 
@@ -61,12 +116,15 @@ class User(BaseModel):
     first_name = fields.CharField(max_length=64, null=True)
     last_name = fields.CharField(max_length=64, null=True)
     picture = fields.CharField(max_length=1024, null=True)
+    role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
+        &#34;models.Role&#34;, related_name=&#34;assigned_users&#34;
+    )  # type: ignore
 
 
 class OpenID(BaseModel):
     &#34;&#34;&#34;OpenID&#34;&#34;&#34;
 
-    user = fields.ForeignKeyField(&#34;models.User&#34;, related_name=&#34;openids&#34;, null=True)
+    user = fields.ForeignKeyField(&#34;models.User&#34;, null=True)
     email = fields.CharField(max_length=256)
     first_name = fields.CharField(max_length=64, null=True)
     last_name = fields.CharField(max_length=64, null=True)
@@ -81,6 +139,37 @@ class OpenID(BaseModel):
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="shopapi.schemas.models.boolstr"><code class="name flex">
+<span>def <span class="ident">boolstr</span></span>(<span>val: str) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return string as a boolean</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def boolstr(val: str) -&gt; bool:
+    &#34;&#34;&#34;Return string as a boolean&#34;&#34;&#34;
+    return val.lower() in [&#34;yes&#34;, &#34;true&#34;, &#34;1&#34;]</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.models.strbool"><code class="name flex">
+<span>def <span class="ident">strbool</span></span>(<span>val: bool) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return boolean as a string</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def strbool(val: bool) -&gt; str:
+    &#34;&#34;&#34;Return boolean as a string&#34;&#34;&#34;
+    return &#34;true&#34; if val else &#34;false&#34;</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -110,6 +199,8 @@ class OpenID(BaseModel):
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="shopapi.schemas.models.OpenID" href="#shopapi.schemas.models.OpenID">OpenID</a></li>
+<li><a title="shopapi.schemas.models.Role" href="#shopapi.schemas.models.Role">Role</a></li>
+<li><a title="shopapi.schemas.models.Shop" href="#shopapi.schemas.models.Shop">Shop</a></li>
 <li><a title="shopapi.schemas.models.User" href="#shopapi.schemas.models.User">User</a></li>
 </ul>
 </dd>
@@ -126,7 +217,7 @@ class OpenID(BaseModel):
 <pre><code class="python">class OpenID(BaseModel):
     &#34;&#34;&#34;OpenID&#34;&#34;&#34;
 
-    user = fields.ForeignKeyField(&#34;models.User&#34;, related_name=&#34;openids&#34;, null=True)
+    user = fields.ForeignKeyField(&#34;models.User&#34;, null=True)
     email = fields.CharField(max_length=256)
     first_name = fields.CharField(max_length=64, null=True)
     last_name = fields.CharField(max_length=64, null=True)
@@ -140,6 +231,144 @@ class OpenID(BaseModel):
 <li><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></li>
 <li>tortoise.models.Model</li>
 </ul>
+</dd>
+<dt id="shopapi.schemas.models.Role"><code class="flex name class">
+<span>class <span class="ident">Role</span></span>
+<span>(</span><span>**kwargs: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Role</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Role(BaseModel):
+    &#34;&#34;&#34;Role&#34;&#34;&#34;
+
+    title = fields.CharField(unique=True, max_length=64)
+    roles = fields.IntField()
+    assigned_users: fields.ReverseRelation[&#34;User&#34;]
+    users = fields.IntField()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></li>
+<li>tortoise.models.Model</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.models.Role.assigned_users"><code class="name">var <span class="ident">assigned_users</span> : tortoise.fields.relational.ReverseRelation[<a title="shopapi.schemas.models.User" href="#shopapi.schemas.models.User">User</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="shopapi.schemas.models.Shop"><code class="flex name class">
+<span>class <span class="ident">Shop</span></span>
+<span>(</span><span>**kwargs: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Shop</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Shop(BaseModel):
+    &#34;&#34;&#34;Shop&#34;&#34;&#34;
+
+    key = fields.CharField(unique=True, max_length=32, index=True)
+    value = fields.CharField(max_length=1024, null=True)  # type: str
+
+    @classmethod
+    async def get_settings(cls, key: str) -&gt; Optional[&#34;Shop&#34;]:
+        &#34;&#34;&#34;Get settings by key&#34;&#34;&#34;
+        dbmod = await cls.filter(key=key).first()
+        if not dbmod:
+            return None
+        return dbmod
+
+    @classmethod
+    async def is_initialized(cls) -&gt; bool:
+        &#34;&#34;&#34;Returns True if the Shop has already been initialized&#34;&#34;&#34;
+        dbmod = await cls.get_settings(&#34;initialized&#34;)
+        if dbmod is None or dbmod.value is None:
+            return False
+        return boolstr(dbmod.value)
+
+    @classmethod
+    async def set_initialized(cls, val: bool = True):
+        &#34;&#34;&#34;Set initialized flag&#34;&#34;&#34;
+        dbmod = await cls.get_settings(&#34;initialized&#34;)
+        if dbmod is None:
+            await cls.create(key=&#34;initialized&#34;, value=strbool(val))
+        else:
+            dbmod.value = strbool(val)
+            await dbmod.save()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></li>
+<li>tortoise.models.Model</li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="shopapi.schemas.models.Shop.get_settings"><code class="name flex">
+<span>async def <span class="ident">get_settings</span></span>(<span>key: str) ‑> Optional[<a title="shopapi.schemas.models.Shop" href="#shopapi.schemas.models.Shop">Shop</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get settings by key</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def get_settings(cls, key: str) -&gt; Optional[&#34;Shop&#34;]:
+    &#34;&#34;&#34;Get settings by key&#34;&#34;&#34;
+    dbmod = await cls.filter(key=key).first()
+    if not dbmod:
+        return None
+    return dbmod</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.models.Shop.is_initialized"><code class="name flex">
+<span>async def <span class="ident">is_initialized</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns True if the Shop has already been initialized</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def is_initialized(cls) -&gt; bool:
+    &#34;&#34;&#34;Returns True if the Shop has already been initialized&#34;&#34;&#34;
+    dbmod = await cls.get_settings(&#34;initialized&#34;)
+    if dbmod is None or dbmod.value is None:
+        return False
+    return boolstr(dbmod.value)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.models.Shop.set_initialized"><code class="name flex">
+<span>async def <span class="ident">set_initialized</span></span>(<span>val: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set initialized flag</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def set_initialized(cls, val: bool = True):
+    &#34;&#34;&#34;Set initialized flag&#34;&#34;&#34;
+    dbmod = await cls.get_settings(&#34;initialized&#34;)
+    if dbmod is None:
+        await cls.create(key=&#34;initialized&#34;, value=strbool(val))
+    else:
+        dbmod.value = strbool(val)
+        await dbmod.save()</code></pre>
+</details>
+</dd>
+</dl>
 </dd>
 <dt id="shopapi.schemas.models.User"><code class="flex name class">
 <span>class <span class="ident">User</span></span>
@@ -158,13 +387,23 @@ class OpenID(BaseModel):
     password = fields.BinaryField(null=True)
     first_name = fields.CharField(max_length=64, null=True)
     last_name = fields.CharField(max_length=64, null=True)
-    picture = fields.CharField(max_length=1024, null=True)</code></pre>
+    picture = fields.CharField(max_length=1024, null=True)
+    role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
+        &#34;models.Role&#34;, related_name=&#34;assigned_users&#34;
+    )  # type: ignore</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></li>
 <li>tortoise.models.Model</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.models.User.role"><code class="name">var <span class="ident">role</span> : Union[Awaitable[<a title="shopapi.schemas.models.Role" href="#shopapi.schemas.models.Role">Role</a>], <a title="shopapi.schemas.models.Role" href="#shopapi.schemas.models.Role">Role</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 </dd>
 </dl>
 </section>
@@ -180,6 +419,12 @@ class OpenID(BaseModel):
 <li><code><a title="shopapi.schemas" href="index.html">shopapi.schemas</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="shopapi.schemas.models.boolstr" href="#shopapi.schemas.models.boolstr">boolstr</a></code></li>
+<li><code><a title="shopapi.schemas.models.strbool" href="#shopapi.schemas.models.strbool">strbool</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
@@ -189,7 +434,24 @@ class OpenID(BaseModel):
 <h4><code><a title="shopapi.schemas.models.OpenID" href="#shopapi.schemas.models.OpenID">OpenID</a></code></h4>
 </li>
 <li>
+<h4><code><a title="shopapi.schemas.models.Role" href="#shopapi.schemas.models.Role">Role</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.models.Role.assigned_users" href="#shopapi.schemas.models.Role.assigned_users">assigned_users</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="shopapi.schemas.models.Shop" href="#shopapi.schemas.models.Shop">Shop</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.models.Shop.get_settings" href="#shopapi.schemas.models.Shop.get_settings">get_settings</a></code></li>
+<li><code><a title="shopapi.schemas.models.Shop.is_initialized" href="#shopapi.schemas.models.Shop.is_initialized">is_initialized</a></code></li>
+<li><code><a title="shopapi.schemas.models.Shop.set_initialized" href="#shopapi.schemas.models.Shop.set_initialized">set_initialized</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="shopapi.schemas.models.User" href="#shopapi.schemas.models.User">User</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.models.User.role" href="#shopapi.schemas.models.User.role">role</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

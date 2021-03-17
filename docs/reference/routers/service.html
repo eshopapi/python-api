@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>shopapi.routers API documentation</title>
-<meta name="description" content="Root module for sub-package routers.
-Imports sub-routers to make them more accessible." />
+<title>shopapi.routers.service API documentation</title>
+<meta name="description" content="Service endpoints used to migrate db, update, backup etc." />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -20,44 +19,86 @@ Imports sub-routers to make them more accessible." />
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>shopapi.routers</code></h1>
+<h1 class="title">Module <code>shopapi.routers.service</code></h1>
 </header>
 <section id="section-intro">
-<p>Root module for sub-package routers.
-Imports sub-routers to make them more accessible.</p>
+<p>Service endpoints used to migrate db, update, backup etc.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;Root module for sub-package routers.
-Imports sub-routers to make them more accessible.
+<pre><code class="python">&#34;&#34;&#34;Service endpoints used to migrate db, update, backup etc.
 &#34;&#34;&#34;
 
-from shopapi.routers import auth
-from shopapi.routers import user
-from shopapi.routers import service</code></pre>
+from typing import List
+from fastapi import APIRouter
+from shopapi.helpers import exceptions
+from shopapi.schemas import schemas, models
+from shopapi.schemas.schemas import (
+    ADMIN,
+    EDITOR,
+    VIEWER,
+    ROLE_ADMIN_ID,
+    ROLE_EDITOR_ID,
+    ROLE_PUBLIC_ID,
+    ROLE_VIEWER_ID,
+)
+
+router = APIRouter(prefix=&#34;/service&#34;, tags=[&#34;service&#34;])
+
+default_roles: List[schemas.RoleInput] = [
+    schemas.RoleInput(id=ROLE_ADMIN_ID, title=&#34;admin&#34;, users=ADMIN, roles=ADMIN),
+    schemas.RoleInput(id=ROLE_PUBLIC_ID, title=&#34;public&#34;),
+    schemas.RoleInput(id=ROLE_EDITOR_ID, title=&#34;editor&#34;, users=EDITOR, roles=EDITOR),
+    schemas.RoleInput(id=ROLE_VIEWER_ID, title=&#34;viewer&#34;, users=VIEWER, roles=VIEWER),
+]
+
+
+@router.get(&#34;/db-init&#34;)
+async def service_db_init():
+    &#34;&#34;&#34;Insert initial data to db&#34;&#34;&#34;
+    if await models.Shop.is_initialized():
+        raise exceptions.InvalidOperation(
+            detail=&#34;The shop was already intitialized. This action can only be performed once.&#34;
+        )
+
+    for role in default_roles:
+        await models.Role.create(**role.dict(exclude_none=True))
+
+    await models.Shop.set_initialized(True)</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt><code class="name"><a title="shopapi.routers.auth" href="auth.html">shopapi.routers.auth</a></code></dt>
+<dt id="shopapi.routers.service.service_db_init"><code class="name flex">
+<span>async def <span class="ident">service_db_init</span></span>(<span>)</span>
+</code></dt>
 <dd>
-<div class="desc"><p>Login-related API endpoints</p></div>
-</dd>
-<dt><code class="name"><a title="shopapi.routers.service" href="service.html">shopapi.routers.service</a></code></dt>
-<dd>
-<div class="desc"><p>Service endpoints used to migrate db, update, backup etc.</p></div>
-</dd>
-<dt><code class="name"><a title="shopapi.routers.user" href="user.html">shopapi.routers.user</a></code></dt>
-<dd>
-<div class="desc"><p>User-related API endpoints</p></div>
+<div class="desc"><p>Insert initial data to db</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@router.get(&#34;/db-init&#34;)
+async def service_db_init():
+    &#34;&#34;&#34;Insert initial data to db&#34;&#34;&#34;
+    if await models.Shop.is_initialized():
+        raise exceptions.InvalidOperation(
+            detail=&#34;The shop was already intitialized. This action can only be performed once.&#34;
+        )
+
+    for role in default_roles:
+        await models.Role.create(**role.dict(exclude_none=True))
+
+    await models.Shop.set_initialized(True)</code></pre>
+</details>
 </dd>
 </dl>
-</section>
-<section>
-</section>
-<section>
 </section>
 <section>
 </section>
@@ -70,14 +111,12 @@ from shopapi.routers import service</code></pre>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="shopapi" href="../index.html">shopapi</a></code></li>
+<li><code><a title="shopapi.routers" href="index.html">shopapi.routers</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
-<ul>
-<li><code><a title="shopapi.routers.auth" href="auth.html">shopapi.routers.auth</a></code></li>
-<li><code><a title="shopapi.routers.service" href="service.html">shopapi.routers.service</a></code></li>
-<li><code><a title="shopapi.routers.user" href="user.html">shopapi.routers.user</a></code></li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="shopapi.routers.service.service_db_init" href="#shopapi.routers.service.service_db_init">service_db_init</a></code></li>
 </ul>
 </li>
 </ul>

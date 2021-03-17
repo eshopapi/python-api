@@ -31,7 +31,9 @@
 &#34;&#34;&#34;
 
 from datetime import datetime
+from enum import IntFlag
 from typing import Mapping, Optional, Union
+
 from pydantic import BaseModel, EmailStr  # pylint: disable=no-name-in-module
 from fastapi_sso.sso.base import OpenID as OpenIDSSO
 
@@ -45,6 +47,55 @@ class ORMModel(BaseModel):
         orm_mode = True
 
 
+class Permission(IntFlag):
+    &#34;&#34;&#34;Basic policies applicable to all resources&#34;&#34;&#34;
+
+    READ = 1
+    WRITE = 2
+    DELETE = 4
+
+    @property
+    def read(self) -&gt; bool:
+        &#34;&#34;&#34;Returns True if current permission contains READ permissions&#34;&#34;&#34;
+        return bool(self &amp; Permission.READ)
+
+    @property
+    def write(self) -&gt; bool:
+        &#34;&#34;&#34;Returns True if current permission contains WRITE permissions&#34;&#34;&#34;
+        return bool(self &amp; Permission.WRITE)
+
+    @property
+    def delete(self) -&gt; bool:
+        &#34;&#34;&#34;Returns True if current permission contains DELETE permissions&#34;&#34;&#34;
+        return bool(self &amp; Permission.DELETE)
+
+
+ADMIN = Permission.READ | Permission.WRITE | Permission.DELETE
+EDITOR = Permission.READ | Permission.WRITE
+VIEWER = Permission.READ
+
+ROLE_ADMIN_ID = 1
+ROLE_PUBLIC_ID = 2
+ROLE_EDITOR_ID = 3
+ROLE_VIEWER_ID = 4
+
+
+class RoleInput(ORMModel):
+    &#34;&#34;&#34;Class to contain policies&#34;&#34;&#34;
+
+    id: Optional[int]
+    title: str
+
+    users: Permission = Permission(0)
+    roles: Permission = Permission(0)
+
+
+class Role(RoleInput):
+    &#34;&#34;&#34;Class to return roles from db&#34;&#34;&#34;
+
+    id: int
+
+
 class UserDBInput(ORMModel):
     &#34;&#34;&#34;User input to be loaded into DB&#34;&#34;&#34;
 
@@ -53,40 +104,9 @@ class UserDBInput(ORMModel):
     first_name: Optional[str]
     last_name: Optional[str]
     picture: Optional[str]
-    password: bytes
-
-
-class UserFromDB(UserDBInput):
-    &#34;&#34;&#34;UserFromDB&#34;&#34;&#34;
-
-    id: int
-
-
-class UserToken(BaseModel):
-    &#34;&#34;&#34;User as returned from token&#34;&#34;&#34;
-
-    id: int
-    email: EmailStr
-    issuer: str
-    not_before: datetime
-    issued_at: datetime
-    expires: datetime
-    provider: str
-    provider_id: Optional[str]
-
-    @staticmethod
-    def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
-        &#34;&#34;&#34;Return `UserToken` object from `token_info` mapping&#34;&#34;&#34;
-        return UserToken(
-            id=token_info.get(&#34;sid&#34;),
-            email=token_info.get(&#34;sub&#34;),
-            issuer=token_info.get(&#34;iss&#34;),
-            not_before=token_info.get(&#34;nbf&#34;),
-            issued_at=token_info.get(&#34;iat&#34;),
-            expires=token_info.get(&#34;exp&#34;),
-            provider=token_info.get(&#34;pvd&#34;),
-            provider_id=token_info.get(&#34;pid&#34;),
-        )
+    password: Optional[bytes]
+    role_id: Optional[int] = ROLE_PUBLIC_ID
+    role: Optional[Role] = None
 
 
 class OpenID(BaseModel):
@@ -114,7 +134,42 @@ class OpenID(BaseModel):
 class OpenIDFromDB(ORMModel, OpenID):
     &#34;&#34;&#34;OpenID&#34;&#34;&#34;
 
-    id: int</code></pre>
+    id: int
+
+
+class UserFromDB(UserDBInput):
+    &#34;&#34;&#34;UserFromDB&#34;&#34;&#34;
+
+    id: int
+
+
+class UserToken(BaseModel):
+    &#34;&#34;&#34;User as returned from token&#34;&#34;&#34;
+
+    id: int
+    email: EmailStr
+    issuer: str
+    not_before: datetime
+    issued_at: datetime
+    expires: datetime
+    provider: str
+    provider_id: Optional[str]
+    role_id: int
+
+    @staticmethod
+    def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
+        &#34;&#34;&#34;Return `UserToken` object from `token_info` mapping&#34;&#34;&#34;
+        return UserToken(
+            id=token_info.get(&#34;sid&#34;),
+            email=token_info.get(&#34;sub&#34;),
+            issuer=token_info.get(&#34;iss&#34;),
+            not_before=token_info.get(&#34;nbf&#34;),
+            issued_at=token_info.get(&#34;iat&#34;),
+            expires=token_info.get(&#34;exp&#34;),
+            provider=token_info.get(&#34;pvd&#34;),
+            provider_id=token_info.get(&#34;pid&#34;),
+            role_id=token_info.get(&#34;rid&#34;),
+        )</code></pre>
 </details>
 </section>
 <section>
@@ -154,6 +209,7 @@ class OpenIDFromDB(ORMModel, OpenID):
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="shopapi.schemas.schemas.OpenIDFromDB" href="#shopapi.schemas.schemas.OpenIDFromDB">OpenIDFromDB</a></li>
+<li><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></li>
 <li><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></li>
 </ul>
 <h3>Class variables</h3>
@@ -312,6 +368,206 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
 </li>
 </ul>
 </dd>
+<dt id="shopapi.schemas.schemas.Permission"><code class="flex name class">
+<span>class <span class="ident">Permission</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Basic policies applicable to all resources</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Permission(IntFlag):
+    &#34;&#34;&#34;Basic policies applicable to all resources&#34;&#34;&#34;
+
+    READ = 1
+    WRITE = 2
+    DELETE = 4
+
+    @property
+    def read(self) -&gt; bool:
+        &#34;&#34;&#34;Returns True if current permission contains READ permissions&#34;&#34;&#34;
+        return bool(self &amp; Permission.READ)
+
+    @property
+    def write(self) -&gt; bool:
+        &#34;&#34;&#34;Returns True if current permission contains WRITE permissions&#34;&#34;&#34;
+        return bool(self &amp; Permission.WRITE)
+
+    @property
+    def delete(self) -&gt; bool:
+        &#34;&#34;&#34;Returns True if current permission contains DELETE permissions&#34;&#34;&#34;
+        return bool(self &amp; Permission.DELETE)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.IntFlag</li>
+<li>builtins.int</li>
+<li>enum.Flag</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.schemas.Permission.DELETE"><code class="name">var <span class="ident">DELETE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.Permission.READ"><code class="name">var <span class="ident">READ</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.Permission.WRITE"><code class="name">var <span class="ident">WRITE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="shopapi.schemas.schemas.Permission.delete"><code class="name">var <span class="ident">delete</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>Returns True if current permission contains DELETE permissions</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def delete(self) -&gt; bool:
+    &#34;&#34;&#34;Returns True if current permission contains DELETE permissions&#34;&#34;&#34;
+    return bool(self &amp; Permission.DELETE)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.schemas.Permission.read"><code class="name">var <span class="ident">read</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>Returns True if current permission contains READ permissions</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def read(self) -&gt; bool:
+    &#34;&#34;&#34;Returns True if current permission contains READ permissions&#34;&#34;&#34;
+    return bool(self &amp; Permission.READ)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.schemas.Permission.write"><code class="name">var <span class="ident">write</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>Returns True if current permission contains WRITE permissions</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def write(self) -&gt; bool:
+    &#34;&#34;&#34;Returns True if current permission contains WRITE permissions&#34;&#34;&#34;
+    return bool(self &amp; Permission.WRITE)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="shopapi.schemas.schemas.Role"><code class="flex name class">
+<span>class <span class="ident">Role</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class to return roles from db</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Role(RoleInput):
+    &#34;&#34;&#34;Class to return roles from db&#34;&#34;&#34;
+
+    id: int</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></li>
+<li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li>pydantic.main.Role</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.schemas.Role.id"><code class="name">var <span class="ident">id</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.schemas.RoleInput.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInput"><code class="flex name class">
+<span>class <span class="ident">RoleInput</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class to contain policies</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class RoleInput(ORMModel):
+    &#34;&#34;&#34;Class to contain policies&#34;&#34;&#34;
+
+    id: Optional[int]
+    title: str
+
+    users: Permission = Permission(0)
+    roles: Permission = Permission(0)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.schemas.Role" href="#shopapi.schemas.schemas.Role">Role</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.schemas.RoleInput.id"><code class="name">var <span class="ident">id</span> : Optional[int]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInput.roles"><code class="name">var <span class="ident">roles</span> : <a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInput.title"><code class="name">var <span class="ident">title</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInput.users"><code class="name">var <span class="ident">users</span> : <a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.schemas.ORMModel.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="shopapi.schemas.schemas.UserDBInput"><code class="flex name class">
 <span>class <span class="ident">UserDBInput</span></span>
 <span>(</span><span>**data: Any)</span>
@@ -332,7 +588,9 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
     first_name: Optional[str]
     last_name: Optional[str]
     picture: Optional[str]
-    password: bytes</code></pre>
+    password: Optional[bytes]
+    role_id: Optional[int] = ROLE_PUBLIC_ID
+    role: Optional[Role] = None</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -362,11 +620,19 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="shopapi.schemas.schemas.UserDBInput.password"><code class="name">var <span class="ident">password</span> : bytes</code></dt>
+<dt id="shopapi.schemas.schemas.UserDBInput.password"><code class="name">var <span class="ident">password</span> : Optional[bytes]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 <dt id="shopapi.schemas.schemas.UserDBInput.picture"><code class="name">var <span class="ident">picture</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.UserDBInput.role"><code class="name">var <span class="ident">role</span> : Optional[<a title="shopapi.schemas.schemas.Role" href="#shopapi.schemas.schemas.Role">Role</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.UserDBInput.role_id"><code class="name">var <span class="ident">role_id</span> : Optional[int]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -443,6 +709,7 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
     expires: datetime
     provider: str
     provider_id: Optional[str]
+    role_id: int
 
     @staticmethod
     def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
@@ -456,6 +723,7 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
             expires=token_info.get(&#34;exp&#34;),
             provider=token_info.get(&#34;pvd&#34;),
             provider_id=token_info.get(&#34;pid&#34;),
+            role_id=token_info.get(&#34;rid&#34;),
         )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -501,6 +769,10 @@ def from_sso(openidsso: OpenIDSSO) -&gt; &#34;OpenID&#34;:
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="shopapi.schemas.schemas.UserToken.role_id"><code class="name">var <span class="ident">role_id</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 </dl>
 <h3>Static methods</h3>
 <dl>
@@ -525,6 +797,7 @@ def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
         expires=token_info.get(&#34;exp&#34;),
         provider=token_info.get(&#34;pvd&#34;),
         provider_id=token_info.get(&#34;pid&#34;),
+        role_id=token_info.get(&#34;rid&#34;),
     )</code></pre>
 </details>
 </dd>
@@ -574,6 +847,32 @@ def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
 </ul>
 </li>
 <li>
+<h4><code><a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a></code></h4>
+<ul class="two-column">
+<li><code><a title="shopapi.schemas.schemas.Permission.DELETE" href="#shopapi.schemas.schemas.Permission.DELETE">DELETE</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.Permission.READ" href="#shopapi.schemas.schemas.Permission.READ">READ</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.Permission.WRITE" href="#shopapi.schemas.schemas.Permission.WRITE">WRITE</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.Permission.delete" href="#shopapi.schemas.schemas.Permission.delete">delete</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.Permission.read" href="#shopapi.schemas.schemas.Permission.read">read</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.Permission.write" href="#shopapi.schemas.schemas.Permission.write">write</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="shopapi.schemas.schemas.Role" href="#shopapi.schemas.schemas.Role">Role</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.schemas.Role.id" href="#shopapi.schemas.schemas.Role.id">id</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.schemas.RoleInput.id" href="#shopapi.schemas.schemas.RoleInput.id">id</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.RoleInput.roles" href="#shopapi.schemas.schemas.RoleInput.roles">roles</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.RoleInput.title" href="#shopapi.schemas.schemas.RoleInput.title">title</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.RoleInput.users" href="#shopapi.schemas.schemas.RoleInput.users">users</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></code></h4>
 <ul class="two-column">
 <li><code><a title="shopapi.schemas.schemas.UserDBInput.email" href="#shopapi.schemas.schemas.UserDBInput.email">email</a></code></li>
@@ -582,6 +881,8 @@ def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
 <li><code><a title="shopapi.schemas.schemas.UserDBInput.last_name" href="#shopapi.schemas.schemas.UserDBInput.last_name">last_name</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.UserDBInput.password" href="#shopapi.schemas.schemas.UserDBInput.password">password</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.UserDBInput.picture" href="#shopapi.schemas.schemas.UserDBInput.picture">picture</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.role" href="#shopapi.schemas.schemas.UserDBInput.role">role</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserDBInput.role_id" href="#shopapi.schemas.schemas.UserDBInput.role_id">role_id</a></code></li>
 </ul>
 </li>
 <li>
@@ -602,6 +903,7 @@ def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
 <li><code><a title="shopapi.schemas.schemas.UserToken.not_before" href="#shopapi.schemas.schemas.UserToken.not_before">not_before</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.UserToken.provider" href="#shopapi.schemas.schemas.UserToken.provider">provider</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.UserToken.provider_id" href="#shopapi.schemas.schemas.UserToken.provider_id">provider_id</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.UserToken.role_id" href="#shopapi.schemas.schemas.UserToken.role_id">role_id</a></code></li>
 </ul>
 </li>
 </ul>
