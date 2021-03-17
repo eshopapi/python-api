@@ -32,6 +32,7 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, status, Cookie
+from starlette.responses import JSONResponse
 from shopapi.helpers import dependencies as deps, exceptions
 from shopapi.schemas import models, schemas, api
 from shopapi import actions
@@ -77,7 +78,12 @@ async def user_delete(
         - users.delete
     &#34;&#34;&#34;
     if user.id != user_id and not role.users.delete:
-        raise exceptions.InsufficientPermissions(&#34;users.delete&#34;)</code></pre>
+        raise exceptions.InsufficientPermissions(&#34;users.delete&#34;)
+    await actions.user.user_delete(user_id)
+    response = JSONResponse(f&#34;User {user_id} was deleted from the database&#34;)
+    if user.id == user_id:
+        response.delete_cookie(&#34;sessiontoken&#34;)
+    return response</code></pre>
 </details>
 </section>
 <section>
@@ -134,7 +140,12 @@ async def user_delete(
         - users.delete
     &#34;&#34;&#34;
     if user.id != user_id and not role.users.delete:
-        raise exceptions.InsufficientPermissions(&#34;users.delete&#34;)</code></pre>
+        raise exceptions.InsufficientPermissions(&#34;users.delete&#34;)
+    await actions.user.user_delete(user_id)
+    response = JSONResponse(f&#34;User {user_id} was deleted from the database&#34;)
+    if user.id == user_id:
+        response.delete_cookie(&#34;sessiontoken&#34;)
+    return response</code></pre>
 </details>
 </dd>
 <dt id="shopapi.routers.user.user_info"><code class="name flex">

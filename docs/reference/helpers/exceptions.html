@@ -144,7 +144,16 @@ class CredentialsExpired(HTTPException):
     &#34;&#34;&#34;Raised when credentials in token expire&#34;&#34;&#34;
 
     def __init__(self):
-        super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail=&#34;Credentials expired&#34;)</code></pre>
+        super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail=&#34;Credentials expired&#34;)
+
+
+class ResourceNotFound(HTTPException):
+    &#34;&#34;&#34;Raised when specified resource was not found&#34;&#34;&#34;
+
+    def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[str] = None):
+        status_code = status.HTTP_404_NOT_FOUND
+        detail = f&#34;Specified {res_type} ({res_name}) was not found&#34;
+        super().__init__(status_code=status_code, detail=detail)</code></pre>
 </details>
 </section>
 <section>
@@ -374,6 +383,32 @@ class CredentialsExpired(HTTPException):
 <li>builtins.BaseException</li>
 </ul>
 </dd>
+<dt id="shopapi.helpers.exceptions.ResourceNotFound"><code class="flex name class">
+<span>class <span class="ident">ResourceNotFound</span></span>
+<span>(</span><span>res_type: str = 'resource', res_name: Optional[str] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised when specified resource was not found</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ResourceNotFound(HTTPException):
+    &#34;&#34;&#34;Raised when specified resource was not found&#34;&#34;&#34;
+
+    def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[str] = None):
+        status_code = status.HTTP_404_NOT_FOUND
+        detail = f&#34;Specified {res_type} ({res_name}) was not found&#34;
+        super().__init__(status_code=status_code, detail=detail)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>fastapi.exceptions.HTTPException</li>
+<li>starlette.exceptions.HTTPException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="shopapi.helpers.exceptions.SecurityException"><code class="flex name class">
 <span>class <span class="ident">SecurityException</span></span>
 <span>(</span><span>status_code: Optional[int] = 401, detail: Optional[str] = None)</span>
@@ -495,6 +530,9 @@ class CredentialsExpired(HTTPException):
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.ResourceExistsException" href="#shopapi.helpers.exceptions.ResourceExistsException">ResourceExistsException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="shopapi.helpers.exceptions.ResourceNotFound" href="#shopapi.helpers.exceptions.ResourceNotFound">ResourceNotFound</a></code></h4>
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.SecurityException" href="#shopapi.helpers.exceptions.SecurityException">SecurityException</a></code></h4>

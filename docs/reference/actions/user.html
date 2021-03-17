@@ -144,7 +144,15 @@ async def get_user_by_email(email: str) -&gt; Optional[schemas.UserFromDB]:
     user = await models.User.filter(email=email).first()
     if not user:
         return None
-    return schemas.UserFromDB.from_orm(user)</code></pre>
+    return schemas.UserFromDB.from_orm(user)
+
+
+async def user_delete(user_id: int):
+    &#34;&#34;&#34;Performs all actions needed to completely purge user from database&#34;&#34;&#34;
+    user = await models.User.get(id=user_id)
+    if not user:
+        raise exceptions.ResourceNotFound(&#34;user&#34;, str(user_id))
+    await user.delete()</code></pre>
 </details>
 </section>
 <section>
@@ -317,6 +325,23 @@ If the user does not exist, it is created first</p></div>
     await models.OpenID.create(**openid.dict(exclude_none=True))</code></pre>
 </details>
 </dd>
+<dt id="shopapi.actions.user.user_delete"><code class="name flex">
+<span>async def <span class="ident">user_delete</span></span>(<span>user_id: int)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Performs all actions needed to completely purge user from database</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def user_delete(user_id: int):
+    &#34;&#34;&#34;Performs all actions needed to completely purge user from database&#34;&#34;&#34;
+    user = await models.User.get(id=user_id)
+    if not user:
+        raise exceptions.ResourceNotFound(&#34;user&#34;, str(user_id))
+    await user.delete()</code></pre>
+</details>
+</dd>
 <dt id="shopapi.actions.user.user_email_exists"><code class="name flex">
 <span>async def <span class="ident">user_email_exists</span></span>(<span>email: str) ‑> bool</span>
 </code></dt>
@@ -356,6 +381,7 @@ If the user does not exist, it is created first</p></div>
 <li><code><a title="shopapi.actions.user.login_user" href="#shopapi.actions.user.login_user">login_user</a></code></li>
 <li><code><a title="shopapi.actions.user.openid_email_exists" href="#shopapi.actions.user.openid_email_exists">openid_email_exists</a></code></li>
 <li><code><a title="shopapi.actions.user.user_add_openid" href="#shopapi.actions.user.user_add_openid">user_add_openid</a></code></li>
+<li><code><a title="shopapi.actions.user.user_delete" href="#shopapi.actions.user.user_delete">user_delete</a></code></li>
 <li><code><a title="shopapi.actions.user.user_email_exists" href="#shopapi.actions.user.user_email_exists">user_email_exists</a></code></li>
 </ul>
 </li>
