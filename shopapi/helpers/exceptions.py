@@ -2,6 +2,7 @@
 
 from typing import Optional
 from fastapi import HTTPException, status
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 from shopapi.config import Config
 
@@ -90,3 +91,28 @@ class ResourceExistsException(HTTPException):
             "or another resource exists that matches your resource's signature"
         )
         super().__init__(status_code=status_code, detail=detail)
+
+
+class InvalidOperation(HTTPException):
+    """Raised whenever there was an attempt to do something that doesn't make any sense"""
+
+    def __init__(self, status_code: Optional[int] = status.HTTP_400_BAD_REQUEST, detail: Optional[str] = None):
+        status_code = status_code or status.HTTP_400_BAD_REQUEST
+        detail = detail or "The action you are trying to perform does not make sense in the current context"
+        super().__init__(status_code=status_code, detail=detail)
+
+
+class InsufficientPermissions(HTTPException):
+    """Raised whenever somebody attempts to do something they are not allowed to"""
+
+    def __init__(self, required: Optional[str] = None):
+        required = required or "unknown"
+        detail = f"You do not have sufficent permissions to perform this action. You need '{required}' permission."
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+
+class CredentialsExpired(HTTPException):
+    """Raised when credentials in token expire"""
+
+    def __init__(self):
+        super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail="Credentials expired")

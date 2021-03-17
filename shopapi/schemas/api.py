@@ -1,7 +1,4 @@
-"""API schemas
-
-Defined below are schemas used to input / output data to / form various API endpoints.
-These schemas have no model counterpart as they are not to be stored in the DB.
+"""API schemas without relation to DB
 """
 
 from pydantic import BaseModel, EmailStr, constr  # pylint: disable=no-name-in-module

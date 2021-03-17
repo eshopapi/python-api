@@ -12,9 +12,9 @@ from fastapi_sso.sso.google import GoogleSSO
 from fastapi_sso.sso.facebook import FacebookSSO
 from fastapi_sso.sso.microsoft import MicrosoftSSO
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
-from shopapi import schemas
+from shopapi.schemas import schemas, api
 from shopapi.config import Config
 from shopapi.helpers import exceptions, dependencies, security
 from shopapi import actions
@@ -52,13 +52,26 @@ def _provider_factory(provider: str) -> SSOBase:
 
 
 @router.post("/login")
-async def auth_login(user: schemas.api.LoginUserIn):
+async def auth_login(user: api.LoginUserIn, permanent: bool = False):
     """Login using username / password"""
     db_user = await actions.user.get_user_by_email(user.email)
     if db_user is None:
         raise exceptions.AuthenticationException()
+    if db_user.password is None:
+        raise exceptions.AuthenticationException()
     if not security.verify_password(user.password, db_user.password.decode("ascii")):
         raise exceptions.AuthenticationException()
+    return await actions.user.login_user(db_user, permanent=permanent)
+
+
+@router.get("/logout")
+async def auth_logout():
+    """Logout active user (delete their token from browser's cookies)"""
+    response = RedirectResponse(Config.base_url)
+    response.delete_cookie("sessiontoken")
+    response.delete_cookie("ssostate")
+    response.delete_cookie("ssoaction")
+    return response
 
 
 @router.get("/sso/{provider}/login")
@@ -81,7 +94,7 @@ async def auth_sso_callback(
     openidsso = await sso.verify_and_process(request)
     if openidsso is None:
         raise exceptions.AuthenticationException()
-    openid = schemas.schemas.OpenID.from_sso(openidsso)
+    openid = schemas.OpenID.from_sso(openidsso)
     if ssoaction == "add-provider":
         if not token:
             raise exceptions.AuthenticationException()
@@ -100,10 +113,10 @@ async def auth_sso_callback(
 
 
 @router.get("/sso/{provider}/add")
-async def auth_sso_add(provider: str, user: schemas.schemas.UserToken = Depends(dependencies.get_user)):
+async def auth_sso_add(provider: str, user: schemas.UserToken = Depends(dependencies.get_user)):
     """Begin flow for adding another provider to existing user"""
     logger.info("Requesting to add provider %s for user %d - %s", provider, user.id, user.email)
     sso = _provider_factory(provider)
     response = await sso.get_login_redirect()
-    response.set_cookie("ssoaction", "add-provider")
+    response.set_cookie("ssoaction", "add-provider", expires=300)
     return response

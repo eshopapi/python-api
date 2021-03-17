@@ -29,5 +29,6 @@ def index():
 
 app.include_router(routers.auth.router)
 app.include_router(routers.user.router)
+app.include_router(routers.service.router)
 
 register_tortoise(app, db_url=build_db_url(), modules={"models": ["shopapi.schemas.models"]}, generate_schemas=True)

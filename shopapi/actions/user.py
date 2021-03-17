@@ -30,6 +30,7 @@ async def get_user_by_openid(openid: schemas.OpenID) -> Optional[schemas.UserFro
     if oid is None:
         return None
     user = await models.User.get(id=oid.user_id)
+    await user.fetch_related("role")
     if user:
         return schemas.UserFromDB.from_orm(user)
     return None
@@ -55,6 +56,7 @@ async def get_or_create_user(openid: schemas.OpenID) -> schemas.UserFromDB:
         email=openid.email, first_name=openid.first_name, last_name=openid.last_name, picture=openid.picture
     )
     user_db = await models.User.create(**user_input.dict(exclude_none=True))
+    await user_db.fetch_related("role")
     await models.OpenID.create(**openid.dict(exclude_none=True), user_id=user_db.id)
     return schemas.UserFromDB.from_orm(user_db)
 

@@ -3,8 +3,9 @@
 from typing import Optional
 from fastapi import Cookie, Header, Depends
 
+from shopapi.config import Config
 from shopapi.helpers import exceptions, security
-from shopapi.schemas import schemas
+from shopapi.schemas import schemas, models
 
 
 async def get_user_token(
@@ -37,3 +38,13 @@ async def get_user(token: str = Depends(get_user_token_strict)) -> schemas.UserT
     """Get user information schema from the decoded token info"""
     token_info = await security.decode_jwt(token)
     return schemas.UserToken.from_token(token_info)
+
+
+async def get_user_role(user: schemas.UserToken = Depends(get_user)) -> schemas.Role:
+    """Get user's role"""
+    role_db = await models.Role.get(id=user.role_id)
+    if not role_db:
+        raise exceptions.UnexpectedException(
+            detail=f"We were unable to retrieve your user information. Please contact us at {Config.support_contact}"
+        )
+    return schemas.Role.from_orm(role_db)
