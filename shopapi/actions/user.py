@@ -116,3 +116,11 @@ async def get_user_by_email(email: str) -> Optional[schemas.UserFromDB]:
     if not user:
         return None
     return schemas.UserFromDB.from_orm(user)
+
+
+async def user_delete(user_id: int):
+    """Performs all actions needed to completely purge user from database"""
+    user = await models.User.get(id=user_id)
+    if not user:
+        raise exceptions.ResourceNotFound("user", str(user_id))
+    await user.delete()

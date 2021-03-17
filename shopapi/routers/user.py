@@ -3,6 +3,7 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, status, Cookie
+from starlette.responses import JSONResponse
 from shopapi.helpers import dependencies as deps, exceptions
 from shopapi.schemas import models, schemas, api
 from shopapi import actions
@@ -49,3 +50,8 @@ async def user_delete(
     """
     if user.id != user_id and not role.users.delete:
         raise exceptions.InsufficientPermissions("users.delete")
+    await actions.user.user_delete(user_id)
+    response = JSONResponse(f"User {user_id} was deleted from the database")
+    if user.id == user_id:
+        response.delete_cookie("sessiontoken")
+    return response
