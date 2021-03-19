@@ -4,18 +4,17 @@
 from typing import List
 from fastapi import APIRouter
 from shopapi.helpers import exceptions
-from shopapi.schemas import schemas, models
+from shopapi.schemas import schemas, models, api
 from shopapi.schemas.schemas import (
     ADMIN,
     EDITOR,
     VIEWER,
-    ROLE_ADMIN_ID,
-    ROLE_EDITOR_ID,
-    ROLE_PUBLIC_ID,
-    ROLE_VIEWER_ID,
 )
 
-router = APIRouter(prefix="/service", tags=["service"])
+from shopapi.constants import ROLE_ADMIN_ID, ROLE_EDITOR_ID, ROLE_PUBLIC_ID, ROLE_VIEWER_ID
+from shopapi.helpers import demo
+
+router = APIRouter(prefix="/service", tags=["Service"])
 
 default_roles: List[schemas.RoleInput] = [
     schemas.RoleInput(id=ROLE_ADMIN_ID, title="admin", users=ADMIN, roles=ADMIN),
@@ -37,3 +36,13 @@ async def service_db_init():
         await models.Role.create(**role.dict(exclude_none=True))
 
     await models.Shop.set_initialized(True)
+
+
+@router.get("/demo-data")
+async def service_demo_data():
+    """Insert demo data"""
+    if await models.Shop.is_production():
+        raise exceptions.InvalidOperation(detail="The shop is in production mode, this is not doable.")
+    for plain_user in demo.users:
+        reg_user = api.RegisterUserIn.from_plain(plain_user)
+        await models.User.create(**reg_user.dict(exclude_none=True))
