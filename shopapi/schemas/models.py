@@ -1,7 +1,7 @@
 """Database models for Tortoise-ORM operations
 """
 
-from typing import Optional
+from typing import List, Optional
 from tortoise import fields
 from tortoise.models import Model
 
@@ -36,12 +36,35 @@ class BaseModel(Model):
     updated_at = fields.DatetimeField(auto_now=True)
     deleted = fields.BooleanField(default=False)
 
+    @staticmethod
+    def get_search_fields() -> List[str]:
+        """List fields that support searching in the current model"""
+        return []
+
 
 class Shop(BaseModel):
     """Shop"""
 
     key = fields.CharField(unique=True, max_length=32, index=True)
     value = fields.CharField(max_length=1024, null=True)  # type: str
+
+    @classmethod
+    async def get_bool(cls, key: str) -> bool:
+        """Returns flag from the database by its key"""
+        dbmod = await cls.get_settings(key)
+        if dbmod is None or dbmod.value is None:
+            return False
+        return boolstr(dbmod.value)
+
+    @classmethod
+    async def set_bool(cls, key: str, val: bool = True):
+        """Set flag in the database by its key"""
+        dbmod = await cls.get_settings(key)
+        if dbmod is None:
+            await cls.create(key=key, value=strbool(val))
+        else:
+            dbmod.value = strbool(val)
+            await dbmod.save()
 
     @classmethod
     async def get_settings(cls, key: str) -> Optional["Shop"]:
@@ -54,20 +77,22 @@ class Shop(BaseModel):
     @classmethod
     async def is_initialized(cls) -> bool:
         """Returns True if the Shop has already been initialized"""
-        dbmod = await cls.get_settings("initialized")
-        if dbmod is None or dbmod.value is None:
-            return False
-        return boolstr(dbmod.value)
+        return await cls.get_bool("initialized")
 
     @classmethod
     async def set_initialized(cls, val: bool = True):
         """Set initialized flag"""
-        dbmod = await cls.get_settings("initialized")
-        if dbmod is None:
-            await cls.create(key="initialized", value=strbool(val))
-        else:
-            dbmod.value = strbool(val)
-            await dbmod.save()
+        await cls.set_bool("initialized", val)
+
+    @classmethod
+    async def is_production(cls) -> bool:
+        """Returns True if the Shop is in production mode"""
+        return await cls.get_bool("production")
+
+    @classmethod
+    async def set_production(cls, val: bool = True):
+        """Set production flag"""
+        await cls.set_bool("production", val)
 
 
 class Role(BaseModel):
@@ -90,6 +115,10 @@ class User(BaseModel):
     role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
         "models.Role", related_name="assigned_users"
     )  # type: ignore
+
+    @staticmethod
+    def get_search_fields() -> List[str]:
+        return ["email", "first_name", "last_name"]
 
 
 class OpenID(BaseModel):

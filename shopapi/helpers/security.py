@@ -61,12 +61,18 @@ async def decode_jwt(token: str) -> Mapping:
     try:
         payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
         expires = datetime.fromtimestamp(float(payload.get("exp", 0)))
-        if datetime.utcnow() >= expires:
+        not_before = datetime.fromtimestamp(float(payload.get("nbf", 0)))
+        now = datetime.utcnow()
+        if expires < now:
+            logger.info("Expired token: %s, expires: %s", payload, expires)
             raise exceptions.CredentialsExpired()
+        if now < not_before:
+            logger.info("Token not valid yet: %s, not-before: %s", payload, not_before)
+            raise exceptions.CredentialsException()
         return payload
     except JWTError as error:
         logger.error(error)
-        raise exceptions.CredentialsException()  # pylint: disable=raise-missing-from
+        raise exceptions.CredentialsException()
 
 
 async def user_from_jwt(token: str) -> schemas.UserFromDB:

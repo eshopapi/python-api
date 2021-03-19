@@ -1,14 +1,19 @@
 """User-related API endpoints
 """
 
-from typing import Optional
+import logging
+from typing import List, Optional
 from fastapi import APIRouter, Depends, status, Cookie
 from starlette.responses import JSONResponse
-from shopapi.helpers import dependencies as deps, exceptions
+from tortoise.query_utils import Q
+from tortoise.exceptions import ConfigurationError, DoesNotExist
+from shopapi.helpers import dependencies as deps, exceptions, security
 from shopapi.schemas import models, schemas, api
 from shopapi import actions
 
-router = APIRouter(prefix="/user", tags=["user"])
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/user", tags=["Users"])
 
 
 @router.get("/me", response_model=schemas.UserToken)
@@ -23,6 +28,72 @@ async def user_role(role: schemas.Role = Depends(deps.get_user_role)):
     return role
 
 
+@router.put("/role", dependencies=[Depends(deps.get_user)], response_model=api.RoleUpdateOut)
+async def user_role_update(role_update: api.RoleUpdateIn, role: schemas.Role = Depends(deps.get_user_role)):
+    """Update user's role.
+
+    Required permissions:
+
+        - `users.write`
+        - `roles.write`
+    """
+    if not role.users.write or not role.roles.write:
+        raise exceptions.InsufficientPermissions("users.write, roles.write")
+    if not await models.Role.get(id=role_update.role_id):
+        raise exceptions.ResourceNotFound("role", str(role_update.role_id))
+    if not (user_db := await models.User.get(id=role_update.user_id)):
+        raise exceptions.ResourceNotFound("user", str(role_update.user_id))
+    user_db = await user_db.update_from_dict({"role_id": role_update.role_id})
+    await user_db.fetch_related("role")
+    return api.RoleUpdateOut.from_orm(user_db)
+
+
+@router.get(
+    "/",
+    dependencies=[Depends(deps.get_user)],
+    response_model=List[api.UserUpdateOut],
+)
+async def user_list(
+    role: schemas.Role = Depends(deps.get_user_role),
+    common: deps.QueryParams = Depends(deps.query_params),
+):
+    """List all users
+
+    Required permissions:
+
+        - `users.read`
+    """
+    if not role.users.read:
+        raise exceptions.InsufficientPermissions("users.read")
+    if common.search is not None:
+        query = Q(
+            *[Q(**{f"{field}__icontains": common.search}) for field in models.User.get_search_fields()], join_type="OR"
+        )
+    else:
+        query = Q()
+    users = await models.User.filter(query).limit(common.limit).offset(common.offset)
+    return [api.UserUpdateOut.from_orm(user) for user in users]
+
+
+@router.get("/{user_id}", response_model=api.UserUpdateOut)
+async def user_get(
+    user_id: int, user: schemas.UserToken = Depends(deps.get_user), role: schemas.Role = Depends(deps.get_user_role)
+):
+    """Get user info
+
+    Required permissions:
+
+        - `users.read`
+    """
+    if not role.users.read and user.id != user_id:
+        raise exceptions.InsufficientPermissions("users.read")
+    try:
+        found = await models.User.get(id=user_id)
+    except DoesNotExist:
+        raise exceptions.ResourceNotFound("user", str(user_id))
+    return api.UserUpdateOut.from_orm(found)
+
+
 @router.post("/")
 async def user_create(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie(None)):
     """Register new user"""
@@ -32,6 +103,7 @@ async def user_create(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie
         raise exceptions.LoginReusedEmailError(user.email)
     reg_user = api.RegisterUserIn.from_plain(user)
     user_model = await models.User.create(**reg_user.dict())
+    await user_model.fetch_related("role")
     userdb = schemas.UserFromDB.from_orm(user_model)
     response = await actions.user.login_user(userdb, redirect_to=redirect_to)
     response.status_code = status.HTTP_201_CREATED
@@ -46,7 +118,8 @@ async def user_delete(
     Only works if current user is deleting themselves or they have users.DELETE
 
     Required permissions:
-        - users.delete
+
+        - `users.delete`
     """
     if user.id != user_id and not role.users.delete:
         raise exceptions.InsufficientPermissions("users.delete")
@@ -55,3 +128,36 @@ async def user_delete(
     if user.id == user_id:
         response.delete_cookie("sessiontoken")
     return response
+
+
+@router.put("/{user_id}", response_model=api.UserUpdateOut)
+async def user_update(
+    user_id: int,
+    info: api.UserUpdateIn,
+    user: schemas.UserToken = Depends(deps.get_user),
+    role: schemas.Role = Depends(deps.get_user_role),
+):
+    """Update user in database specified with `user_id` with the data in `info`
+
+    Required permissions:
+
+        - `users.write`
+    """
+    if user.id != user_id and not role.users.write:
+        raise exceptions.InsufficientPermissions("users.write")
+    user_db = await models.User.get(id=user_id)
+    if not user_db:
+        raise exceptions.ResourceNotFound("user", str(user_id))
+    try:
+        dct = info.dict(exclude_none=True)
+        password = dct.pop("password", None)
+        if password is not None:
+            dct["password"] = security.get_password_hash(password)
+        user_db = await user_db.update_from_dict(dct)
+        return api.UserUpdateOut.from_orm(user_db)
+    except ValueError as error:
+        logger.error(error)
+        raise exceptions.InvalidOperation()
+    except ConfigurationError as error:
+        logger.error(error)
+        raise exceptions.UnexpectedException()

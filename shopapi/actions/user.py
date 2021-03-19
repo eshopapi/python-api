@@ -115,6 +115,7 @@ async def get_user_by_email(email: str) -> Optional[schemas.UserFromDB]:
     user = await models.User.filter(email=email).first()
     if not user:
         return None
+    await user.fetch_related("role")
     return schemas.UserFromDB.from_orm(user)
 
 

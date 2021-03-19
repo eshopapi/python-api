@@ -1,13 +1,30 @@
 """Exceptions"""
 
-from typing import Optional
+from typing import Dict, Optional
 from fastapi import HTTPException, status
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from shopapi.config import Config
 
 
-class UnexpectedException(HTTPException):
+class ExtendedHTTPException(HTTPException):
+    """Display error code together with detail"""
+
+    def __init__(
+        self,
+        status_code: Optional[int] = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail: Optional[str] = None,
+        headers: Optional[Dict] = None,
+    ):
+        status_code = status_code or status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail = detail or "Unexpected error ocurred"
+        headers = headers or {}
+        super().__init__(
+            status_code=status_code, headers=headers, detail={"message": detail, "code": self.__class__.__name__}
+        )
+
+
+class UnexpectedException(ExtendedHTTPException):
     """Raised whenever an unexpected error ocurrs. Displays support contact to the user."""
 
     def __init__(
@@ -18,7 +35,7 @@ class UnexpectedException(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class LoginError(HTTPException):
+class LoginError(ExtendedHTTPException):
     """Raised whenever login-specific error ocurrs"""
 
     def __init__(self, status_code: Optional[int] = status.HTTP_401_UNAUTHORIZED, detail: Optional[str] = None):
@@ -39,7 +56,7 @@ class LoginReusedEmailError(LoginError):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
-class UserAlreadyExists(HTTPException):
+class UserAlreadyExists(ExtendedHTTPException):
     """Raised when user is about to register but his email already exists"""
 
     def __init__(self, email: Optional[str] = None):
@@ -47,7 +64,7 @@ class UserAlreadyExists(HTTPException):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
-class CredentialsException(HTTPException):
+class CredentialsException(ExtendedHTTPException):
     """Raised when credentials provided by the user cannot be verified"""
 
     def __init__(self):
@@ -58,7 +75,7 @@ class CredentialsException(HTTPException):
         )
 
 
-class AuthenticationException(HTTPException):
+class AuthenticationException(ExtendedHTTPException):
     """Raised when the user could not be authenticated"""
 
     def __init__(self):
@@ -69,7 +86,7 @@ class AuthenticationException(HTTPException):
         )
 
 
-class SecurityException(HTTPException):
+class SecurityException(ExtendedHTTPException):
     """Raised when a suspection that someone is trying to do something ugly rises"""
 
     def __init__(self, status_code: Optional[int] = status.HTTP_401_UNAUTHORIZED, detail: Optional[str] = None):
@@ -81,7 +98,7 @@ class SecurityException(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class ResourceExistsException(HTTPException):
+class ResourceExistsException(ExtendedHTTPException):
     """Raised whenever there is an attempt to create instance that does not match UNIQUE constraint"""
 
     def __init__(self, status_code: Optional[int] = status.HTTP_409_CONFLICT, detail: Optional[str] = None):
@@ -93,7 +110,7 @@ class ResourceExistsException(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class InvalidOperation(HTTPException):
+class InvalidOperation(ExtendedHTTPException):
     """Raised whenever there was an attempt to do something that doesn't make any sense"""
 
     def __init__(self, status_code: Optional[int] = status.HTTP_400_BAD_REQUEST, detail: Optional[str] = None):
@@ -102,7 +119,7 @@ class InvalidOperation(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class InsufficientPermissions(HTTPException):
+class InsufficientPermissions(ExtendedHTTPException):
     """Raised whenever somebody attempts to do something they are not allowed to"""
 
     def __init__(self, required: Optional[str] = None):
@@ -111,14 +128,14 @@ class InsufficientPermissions(HTTPException):
         super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
-class CredentialsExpired(HTTPException):
+class CredentialsExpired(ExtendedHTTPException):
     """Raised when credentials in token expire"""
 
     def __init__(self):
         super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail="Credentials expired")
 
 
-class ResourceNotFound(HTTPException):
+class ResourceNotFound(ExtendedHTTPException):
     """Raised when specified resource was not found"""
 
     def __init__(self, res_type: str = "resource", res_name: Optional[str] = None):
