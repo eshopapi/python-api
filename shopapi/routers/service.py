@@ -3,8 +3,9 @@
 
 from typing import List
 from fastapi import APIRouter
+from shopapi import actions
 from shopapi.helpers import exceptions
-from shopapi.schemas import schemas, models, api
+from shopapi.schemas import schemas, models
 from shopapi.schemas.schemas import (
     ADMIN,
     EDITOR,
@@ -44,5 +45,4 @@ async def service_demo_data():
     if await models.Shop.is_production():
         raise exceptions.InvalidOperation(detail="The shop is in production mode, this is not doable.")
     for plain_user in demo.users:
-        reg_user = api.RegisterUserIn.from_plain(plain_user)
-        await models.User.create(**reg_user.dict(exclude_none=True))
+        await actions.user.create_user(plain_user)

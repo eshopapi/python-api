@@ -5,9 +5,8 @@ import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, status, Cookie
 from starlette.responses import JSONResponse
-from tortoise.query_utils import Q
 from tortoise.exceptions import ConfigurationError, DoesNotExist
-from shopapi.helpers import dependencies as deps, exceptions, security
+from shopapi.helpers import dependencies as deps, exceptions, security, utils
 from shopapi.schemas import models, schemas, api
 from shopapi import actions
 
@@ -40,10 +39,11 @@ async def user_role_update(role_update: api.RoleUpdateIn, role: schemas.Role = D
     if not role.users.write or not role.roles.write:
         raise exceptions.InsufficientPermissions("users.write, roles.write")
     if not await models.Role.get(id=role_update.role_id):
-        raise exceptions.ResourceNotFound("role", str(role_update.role_id))
+        raise exceptions.ResourceNotFound("role", role_update.role_id)
     if not (user_db := await models.User.get(id=role_update.user_id)):
-        raise exceptions.ResourceNotFound("user", str(role_update.user_id))
+        raise exceptions.ResourceNotFound("user", role_update.user_id)
     user_db = await user_db.update_from_dict({"role_id": role_update.role_id})
+    await user_db.save()
     await user_db.fetch_related("role")
     return api.RoleUpdateOut.from_orm(user_db)
 
@@ -65,12 +65,7 @@ async def user_list(
     """
     if not role.users.read:
         raise exceptions.InsufficientPermissions("users.read")
-    if common.search is not None:
-        query = Q(
-            *[Q(**{f"{field}__icontains": common.search}) for field in models.User.get_search_fields()], join_type="OR"
-        )
-    else:
-        query = Q()
+    query = utils.build_search_query(common, models.User)
     users = await models.User.filter(query).limit(common.limit).offset(common.offset)
     return [api.UserUpdateOut.from_orm(user) for user in users]
 
@@ -90,21 +85,14 @@ async def user_get(
     try:
         found = await models.User.get(id=user_id)
     except DoesNotExist:
-        raise exceptions.ResourceNotFound("user", str(user_id))
+        raise exceptions.ResourceNotFound("user", user_id)
     return api.UserUpdateOut.from_orm(found)
 
 
 @router.post("/")
 async def user_create(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie(None)):
     """Register new user"""
-    if await actions.user.user_email_exists(user.email):
-        raise exceptions.UserAlreadyExists(user.email)
-    if await actions.user.openid_email_exists(user.email):
-        raise exceptions.LoginReusedEmailError(user.email)
-    reg_user = api.RegisterUserIn.from_plain(user)
-    user_model = await models.User.create(**reg_user.dict())
-    await user_model.fetch_related("role")
-    userdb = schemas.UserFromDB.from_orm(user_model)
+    userdb = await actions.user.create_user(user)
     response = await actions.user.login_user(userdb, redirect_to=redirect_to)
     response.status_code = status.HTTP_201_CREATED
     return response
@@ -147,13 +135,14 @@ async def user_update(
         raise exceptions.InsufficientPermissions("users.write")
     user_db = await models.User.get(id=user_id)
     if not user_db:
-        raise exceptions.ResourceNotFound("user", str(user_id))
+        raise exceptions.ResourceNotFound("user", user_id)
     try:
         dct = info.dict(exclude_none=True)
         password = dct.pop("password", None)
         if password is not None:
             dct["password"] = security.get_password_hash(password)
         user_db = await user_db.update_from_dict(dct)
+        await user_db.save()
         return api.UserUpdateOut.from_orm(user_db)
     except ValueError as error:
         logger.error(error)

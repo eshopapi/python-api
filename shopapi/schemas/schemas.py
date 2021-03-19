@@ -10,6 +10,7 @@ from fastapi_sso.sso.base import OpenID as OpenIDSSO
 
 from shopapi import constants
 
+
 class ORMModel(BaseModel):
     """Base for orm models"""
 
@@ -46,11 +47,20 @@ ADMIN = Permission.READ | Permission.WRITE | Permission.DELETE
 EDITOR = Permission.READ | Permission.WRITE
 VIEWER = Permission.READ
 
-class RoleInput(ORMModel):
+
+class RoleInputUser(ORMModel):
+    """Class to contain policies, given by user"""
+
+    title: str
+
+    users: Optional[Permission] = None
+    roles: Optional[Permission] = None
+
+
+class RoleInput(RoleInputUser):
     """Class to contain policies"""
 
     id: Optional[int]
-    title: str
 
     users: Permission = Permission(0)
     roles: Permission = Permission(0)

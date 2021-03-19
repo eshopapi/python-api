@@ -1,6 +1,6 @@
 """Exceptions"""
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from fastapi import HTTPException, status
 from starlette.status import HTTP_401_UNAUTHORIZED
 
@@ -138,7 +138,7 @@ class CredentialsExpired(ExtendedHTTPException):
 class ResourceNotFound(ExtendedHTTPException):
     """Raised when specified resource was not found"""
 
-    def __init__(self, res_type: str = "resource", res_name: Optional[str] = None):
+    def __init__(self, res_type: str = "resource", res_name: Optional[Any] = None):
         status_code = status.HTTP_404_NOT_FOUND
         detail = f"Specified {res_type} ({res_name}) was not found"
         super().__init__(status_code=status_code, detail=detail)

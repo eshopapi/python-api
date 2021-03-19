@@ -6,8 +6,9 @@ import logging
 from datetime import timedelta
 from typing import Optional
 from starlette.responses import JSONResponse, RedirectResponse, Response
+from tortoise.exceptions import IntegrityError
 
-from shopapi.schemas import schemas, models
+from shopapi.schemas import schemas, models, api
 from shopapi.helpers import exceptions, security
 from shopapi.config import Config
 
@@ -59,6 +60,22 @@ async def get_or_create_user(openid: schemas.OpenID) -> schemas.UserFromDB:
     await user_db.fetch_related("role")
     await models.OpenID.create(**openid.dict(exclude_none=True), user_id=user_db.id)
     return schemas.UserFromDB.from_orm(user_db)
+
+
+async def create_user(user: api.LoginUserIn) -> schemas.UserFromDB:
+    """Create user from login data"""
+    if await user_email_exists(user.email):
+        raise exceptions.UserAlreadyExists(user.email)
+    if await openid_email_exists(user.email):
+        raise exceptions.LoginReusedEmailError(user.email)
+    reg_user = api.RegisterUserIn.from_plain(user)
+    try:
+        user_model = await models.User.create(**reg_user.dict())
+    except IntegrityError:
+        raise exceptions.UserAlreadyExists(user.email)
+    await user_model.fetch_related("role")
+    userdb = schemas.UserFromDB.from_orm(user_model)
+    return userdb
 
 
 async def login_user(
@@ -123,5 +140,5 @@ async def user_delete(user_id: int):
     """Performs all actions needed to completely purge user from database"""
     user = await models.User.get(id=user_id)
     if not user:
-        raise exceptions.ResourceNotFound("user", str(user_id))
+        raise exceptions.ResourceNotFound("user", user_id)
     await user.delete()

@@ -25,7 +25,7 @@ def strbool(val: bool) -> str:
 
 def boolstr(val: str) -> bool:
     """Return string as a boolean"""
-    return val.lower() in ["yes", "true", "1"]
+    return val.lower() in ("yes", "true", "1")
 
 
 class BaseModel(Model):
@@ -47,6 +47,10 @@ class Shop(BaseModel):
 
     key = fields.CharField(unique=True, max_length=32, index=True)
     value = fields.CharField(max_length=1024, null=True)  # type: str
+
+    @staticmethod
+    def get_search_fields() -> List[str]:
+        return ["key", "value"]
 
     @classmethod
     async def get_bool(cls, key: str) -> bool:
@@ -102,6 +106,10 @@ class Role(BaseModel):
     roles = fields.IntField()
     assigned_users: fields.ReverseRelation["User"]
     users = fields.IntField()
+
+    @staticmethod
+    def get_search_fields() -> List[str]:
+        return ["title"]
 
 
 class User(BaseModel):

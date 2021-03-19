@@ -22,6 +22,7 @@ tags = [
     {"name": "General", "description": "Generic endpoints that belong nowhere else."},
     {"name": "Authentication", "description": "Authenticate user, create openid and manage openid associations."},
     {"name": "Users", "description": "Endpoints used to manage users and role associations."},
+    {"name": "Roles", "description": "Endpoints used to manage user roles"},
     {"name": "Service", "description": "Service endpoint used to manager ShopAPI environment and deployment."},
 ]
 
@@ -45,5 +46,6 @@ def index():
 app.include_router(routers.auth.router)
 app.include_router(routers.user.router)
 app.include_router(routers.service.router)
+app.include_router(routers.roles.router)
 
 register_tortoise(app, db_url=build_db_url(), modules={"models": ["shopapi.schemas.models"]}, generate_schemas=True)
