@@ -39,6 +39,7 @@ from fastapi_sso.sso.base import OpenID as OpenIDSSO
 
 from shopapi import constants
 
+
 class ORMModel(BaseModel):
     &#34;&#34;&#34;Base for orm models&#34;&#34;&#34;
 
@@ -75,11 +76,20 @@ ADMIN = Permission.READ | Permission.WRITE | Permission.DELETE
 EDITOR = Permission.READ | Permission.WRITE
 VIEWER = Permission.READ
 
-class RoleInput(ORMModel):
+
+class RoleInputUser(ORMModel):
+    &#34;&#34;&#34;Class to contain policies, given by user&#34;&#34;&#34;
+
+    title: str
+
+    users: Optional[Permission] = None
+    roles: Optional[Permission] = None
+
+
+class RoleInput(RoleInputUser):
     &#34;&#34;&#34;Class to contain policies&#34;&#34;&#34;
 
     id: Optional[int]
-    title: str
 
     users: Permission = Permission(0)
     roles: Permission = Permission(0)
@@ -204,7 +214,7 @@ class UserToken(BaseModel):
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="shopapi.schemas.schemas.OpenIDFromDB" href="#shopapi.schemas.schemas.OpenIDFromDB">OpenIDFromDB</a></li>
-<li><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></li>
+<li><a title="shopapi.schemas.schemas.RoleInputUser" href="#shopapi.schemas.schemas.RoleInputUser">RoleInputUser</a></li>
 <li><a title="shopapi.schemas.schemas.UserDBInput" href="#shopapi.schemas.schemas.UserDBInput">UserDBInput</a></li>
 </ul>
 <h3>Class variables</h3>
@@ -480,12 +490,17 @@ def write(self) -&gt; bool:
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></li>
+<li><a title="shopapi.schemas.schemas.RoleInputUser" href="#shopapi.schemas.schemas.RoleInputUser">RoleInputUser</a></li>
 <li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
+<li>pydantic.main.Role</li>
+<li>pydantic.main.Role</li>
+<li>pydantic.main.Role</li>
+<li>pydantic.main.Role</li>
 <li>pydantic.main.Role</li>
 </ul>
 <h3>Class variables</h3>
@@ -516,17 +531,17 @@ def write(self) -&gt; bool:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class RoleInput(ORMModel):
+<pre><code class="python">class RoleInput(RoleInputUser):
     &#34;&#34;&#34;Class to contain policies&#34;&#34;&#34;
 
     id: Optional[int]
-    title: str
 
     users: Permission = Permission(0)
     roles: Permission = Permission(0)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.schemas.schemas.RoleInputUser" href="#shopapi.schemas.schemas.RoleInputUser">RoleInputUser</a></li>
 <li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
@@ -545,11 +560,61 @@ def write(self) -&gt; bool:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="shopapi.schemas.schemas.RoleInput.title"><code class="name">var <span class="ident">title</span> : str</code></dt>
+<dt id="shopapi.schemas.schemas.RoleInput.users"><code class="name">var <span class="ident">users</span> : <a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="shopapi.schemas.schemas.RoleInput.users"><code class="name">var <span class="ident">users</span> : <a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a></code></dt>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.schemas.RoleInputUser" href="#shopapi.schemas.schemas.RoleInputUser">RoleInputUser</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.schemas.RoleInputUser.Config" href="#shopapi.schemas.schemas.ORMModel.Config">Config</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInputUser"><code class="flex name class">
+<span>class <span class="ident">RoleInputUser</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class to contain policies, given by user</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class RoleInputUser(ORMModel):
+    &#34;&#34;&#34;Class to contain policies, given by user&#34;&#34;&#34;
+
+    title: str
+
+    users: Optional[Permission] = None
+    roles: Optional[Permission] = None</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.schemas.ORMModel" href="#shopapi.schemas.schemas.ORMModel">ORMModel</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="shopapi.schemas.schemas.RoleInput" href="#shopapi.schemas.schemas.RoleInput">RoleInput</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shopapi.schemas.schemas.RoleInputUser.roles"><code class="name">var <span class="ident">roles</span> : Optional[<a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInputUser.title"><code class="name">var <span class="ident">title</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shopapi.schemas.schemas.RoleInputUser.users"><code class="name">var <span class="ident">users</span> : Optional[<a title="shopapi.schemas.schemas.Permission" href="#shopapi.schemas.schemas.Permission">Permission</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -863,8 +928,15 @@ def from_token(token_info: Union[Mapping, dict]) -&gt; &#34;UserToken&#34;:
 <ul class="">
 <li><code><a title="shopapi.schemas.schemas.RoleInput.id" href="#shopapi.schemas.schemas.RoleInput.id">id</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.RoleInput.roles" href="#shopapi.schemas.schemas.RoleInput.roles">roles</a></code></li>
-<li><code><a title="shopapi.schemas.schemas.RoleInput.title" href="#shopapi.schemas.schemas.RoleInput.title">title</a></code></li>
 <li><code><a title="shopapi.schemas.schemas.RoleInput.users" href="#shopapi.schemas.schemas.RoleInput.users">users</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="shopapi.schemas.schemas.RoleInputUser" href="#shopapi.schemas.schemas.RoleInputUser">RoleInputUser</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.schemas.RoleInputUser.roles" href="#shopapi.schemas.schemas.RoleInputUser.roles">roles</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.RoleInputUser.title" href="#shopapi.schemas.schemas.RoleInputUser.title">title</a></code></li>
+<li><code><a title="shopapi.schemas.schemas.RoleInputUser.users" href="#shopapi.schemas.schemas.RoleInputUser.users">users</a></code></li>
 </ul>
 </li>
 <li>

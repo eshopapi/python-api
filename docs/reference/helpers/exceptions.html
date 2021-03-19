@@ -29,7 +29,7 @@
 </summary>
 <pre><code class="python">&#34;&#34;&#34;Exceptions&#34;&#34;&#34;
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from fastapi import HTTPException, status
 from starlette.status import HTTP_401_UNAUTHORIZED
 
@@ -167,7 +167,7 @@ class CredentialsExpired(ExtendedHTTPException):
 class ResourceNotFound(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when specified resource was not found&#34;&#34;&#34;
 
-    def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[str] = None):
+    def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[Any] = None):
         status_code = status.HTTP_404_NOT_FOUND
         detail = f&#34;Specified {res_type} ({res_name}) was not found&#34;
         super().__init__(status_code=status_code, detail=detail)</code></pre>
@@ -458,7 +458,7 @@ class ResourceNotFound(ExtendedHTTPException):
 </dd>
 <dt id="shopapi.helpers.exceptions.ResourceNotFound"><code class="flex name class">
 <span>class <span class="ident">ResourceNotFound</span></span>
-<span>(</span><span>res_type: str = 'resource', res_name: Optional[str] = None)</span>
+<span>(</span><span>res_type: str = 'resource', res_name: Optional[Any] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Raised when specified resource was not found</p></div>
@@ -469,7 +469,7 @@ class ResourceNotFound(ExtendedHTTPException):
 <pre><code class="python">class ResourceNotFound(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when specified resource was not found&#34;&#34;&#34;
 
-    def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[str] = None):
+    def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[Any] = None):
         status_code = status.HTTP_404_NOT_FOUND
         detail = f&#34;Specified {res_type} ({res_name}) was not found&#34;
         super().__init__(status_code=status_code, detail=detail)</code></pre>

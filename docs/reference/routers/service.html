@@ -32,8 +32,9 @@
 
 from typing import List
 from fastapi import APIRouter
+from shopapi import actions
 from shopapi.helpers import exceptions
-from shopapi.schemas import schemas, models, api
+from shopapi.schemas import schemas, models
 from shopapi.schemas.schemas import (
     ADMIN,
     EDITOR,
@@ -73,8 +74,7 @@ async def service_demo_data():
     if await models.Shop.is_production():
         raise exceptions.InvalidOperation(detail=&#34;The shop is in production mode, this is not doable.&#34;)
     for plain_user in demo.users:
-        reg_user = api.RegisterUserIn.from_plain(plain_user)
-        await models.User.create(**reg_user.dict(exclude_none=True))</code></pre>
+        await actions.user.create_user(plain_user)</code></pre>
 </details>
 </section>
 <section>
@@ -122,8 +122,7 @@ async def service_demo_data():
     if await models.Shop.is_production():
         raise exceptions.InvalidOperation(detail=&#34;The shop is in production mode, this is not doable.&#34;)
     for plain_user in demo.users:
-        reg_user = api.RegisterUserIn.from_plain(plain_user)
-        await models.User.create(**reg_user.dict(exclude_none=True))</code></pre>
+        await actions.user.create_user(plain_user)</code></pre>
 </details>
 </dd>
 </dl>

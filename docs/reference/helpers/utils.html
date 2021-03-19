@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>shopapi.routers API documentation</title>
-<meta name="description" content="Root module for sub-package routers.
-Imports sub-routers to make them more accessible." />
+<title>shopapi.helpers.utils API documentation</title>
+<meta name="description" content="Utility helpers" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -20,49 +19,66 @@ Imports sub-routers to make them more accessible." />
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>shopapi.routers</code></h1>
+<h1 class="title">Module <code>shopapi.helpers.utils</code></h1>
 </header>
 <section id="section-intro">
-<p>Root module for sub-package routers.
-Imports sub-routers to make them more accessible.</p>
+<p>Utility helpers</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;Root module for sub-package routers.
-Imports sub-routers to make them more accessible.
+<pre><code class="python">&#34;&#34;&#34;Utility helpers
 &#34;&#34;&#34;
 
-from shopapi.routers import auth
-from shopapi.routers import user
-from shopapi.routers import service
-from shopapi.routers import roles</code></pre>
+from typing import Optional, Type, Union
+from tortoise.queryset import Q
+
+from shopapi.schemas import models
+from shopapi.helpers.dependencies import QueryParams
+
+
+def build_search_query(search: Union[Optional[str], Optional[QueryParams]], model: Type[models.BaseModel]) -&gt; Q:
+    &#34;&#34;&#34;Build search query from either str search or `QueryParams` object holding the search string.
+    Returns empty query if search is None
+    &#34;&#34;&#34;
+    if isinstance(search, QueryParams):
+        search = search.search
+    if search is None:
+        return Q()
+    query = Q(*[Q(**{f&#34;{field}__icontains&#34;: search}) for field in model.get_search_fields()], join_type=&#34;OR&#34;)
+    return query</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt><code class="name"><a title="shopapi.routers.auth" href="auth.html">shopapi.routers.auth</a></code></dt>
+<dt id="shopapi.helpers.utils.build_search_query"><code class="name flex">
+<span>def <span class="ident">build_search_query</span></span>(<span>search: Union[str, NoneType, <a title="shopapi.helpers.dependencies.QueryParams" href="dependencies.html#shopapi.helpers.dependencies.QueryParams">QueryParams</a>], model: Type[<a title="shopapi.schemas.models.BaseModel" href="../schemas/models.html#shopapi.schemas.models.BaseModel">BaseModel</a>]) ‑> tortoise.query_utils.Q</span>
+</code></dt>
 <dd>
-<div class="desc"><p>Login-related API endpoints</p></div>
-</dd>
-<dt><code class="name"><a title="shopapi.routers.roles" href="roles.html">shopapi.routers.roles</a></code></dt>
-<dd>
-<div class="desc"><p>Roles routes</p></div>
-</dd>
-<dt><code class="name"><a title="shopapi.routers.service" href="service.html">shopapi.routers.service</a></code></dt>
-<dd>
-<div class="desc"><p>Service endpoints used to migrate db, update, backup etc.</p></div>
-</dd>
-<dt><code class="name"><a title="shopapi.routers.user" href="user.html">shopapi.routers.user</a></code></dt>
-<dd>
-<div class="desc"><p>User-related API endpoints</p></div>
+<div class="desc"><p>Build search query from either str search or <code>QueryParams</code> object holding the search string.
+Returns empty query if search is None</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def build_search_query(search: Union[Optional[str], Optional[QueryParams]], model: Type[models.BaseModel]) -&gt; Q:
+    &#34;&#34;&#34;Build search query from either str search or `QueryParams` object holding the search string.
+    Returns empty query if search is None
+    &#34;&#34;&#34;
+    if isinstance(search, QueryParams):
+        search = search.search
+    if search is None:
+        return Q()
+    query = Q(*[Q(**{f&#34;{field}__icontains&#34;: search}) for field in model.get_search_fields()], join_type=&#34;OR&#34;)
+    return query</code></pre>
+</details>
 </dd>
 </dl>
-</section>
-<section>
-</section>
-<section>
 </section>
 <section>
 </section>
@@ -75,15 +91,12 @@ from shopapi.routers import roles</code></pre>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="shopapi" href="../index.html">shopapi</a></code></li>
+<li><code><a title="shopapi.helpers" href="index.html">shopapi.helpers</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
-<ul>
-<li><code><a title="shopapi.routers.auth" href="auth.html">shopapi.routers.auth</a></code></li>
-<li><code><a title="shopapi.routers.roles" href="roles.html">shopapi.routers.roles</a></code></li>
-<li><code><a title="shopapi.routers.service" href="service.html">shopapi.routers.service</a></code></li>
-<li><code><a title="shopapi.routers.user" href="user.html">shopapi.routers.user</a></code></li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="shopapi.helpers.utils.build_search_query" href="#shopapi.helpers.utils.build_search_query">build_search_query</a></code></li>
 </ul>
 </li>
 </ul>
