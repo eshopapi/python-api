@@ -29,12 +29,24 @@
 </summary>
 <pre><code class="python">&#34;&#34;&#34;Dependencies to make our lifes easier and our views cleaner&#34;&#34;&#34;
 
-from typing import Optional
+import logging
+from typing import NamedTuple, Optional
 from fastapi import Cookie, Header, Depends
+import tortoise.exceptions
 
 from shopapi.config import Config
 from shopapi.helpers import exceptions, security
 from shopapi.schemas import schemas, models
+
+logger = logging.getLogger(__name__)
+
+
+class QueryParams(NamedTuple):
+    &#34;&#34;&#34;Named Tuple to contain query params&#34;&#34;&#34;
+
+    search: Optional[str]
+    offset: int = 0
+    limit: int = 10
 
 
 async def get_user_token(
@@ -71,12 +83,25 @@ async def get_user(token: str = Depends(get_user_token_strict)) -&gt; schemas.Us
 
 async def get_user_role(user: schemas.UserToken = Depends(get_user)) -&gt; schemas.Role:
     &#34;&#34;&#34;Get user&#39;s role&#34;&#34;&#34;
-    role_db = await models.Role.get(id=user.role_id)
+    try:
+        role_db = await models.Role.get(id=user.role_id)
+    except tortoise.exceptions.DoesNotExist as error:
+        logger.error(error)
+        raise exceptions.CredentialsException()
     if not role_db:
         raise exceptions.UnexpectedException(
             detail=f&#34;We were unable to retrieve your user information. Please contact us at {Config.support_contact}&#34;
         )
-    return schemas.Role.from_orm(role_db)</code></pre>
+    return schemas.Role.from_orm(role_db)
+
+
+async def query_params(search: Optional[str] = None, offset: int = 0, limit: int = 10) -&gt; QueryParams:
+    &#34;&#34;&#34;Default query parameters search, skip and limit&#34;&#34;&#34;
+    if not 0 &lt; limit &lt;= 100:
+        raise exceptions.InvalidOperation(detail=&#34;`limit` must be at least 1 and at most 100&#34;)
+    if offset &lt; 0:
+        raise exceptions.InvalidOperation(detail=&#34;`offset` muset be &gt;= 0&#34;)
+    return QueryParams(search=search, offset=offset, limit=limit)</code></pre>
 </details>
 </section>
 <section>
@@ -112,7 +137,11 @@ async def get_user_role(user: schemas.UserToken = Depends(get_user)) -&gt; schem
 </summary>
 <pre><code class="python">async def get_user_role(user: schemas.UserToken = Depends(get_user)) -&gt; schemas.Role:
     &#34;&#34;&#34;Get user&#39;s role&#34;&#34;&#34;
-    role_db = await models.Role.get(id=user.role_id)
+    try:
+        role_db = await models.Role.get(id=user.role_id)
+    except tortoise.exceptions.DoesNotExist as error:
+        logger.error(error)
+        raise exceptions.CredentialsException()
     if not role_db:
         raise exceptions.UnexpectedException(
             detail=f&#34;We were unable to retrieve your user information. Please contact us at {Config.support_contact}&#34;
@@ -165,9 +194,67 @@ Raises error if no token is found</p></div>
     raise exceptions.AuthenticationException()</code></pre>
 </details>
 </dd>
+<dt id="shopapi.helpers.dependencies.query_params"><code class="name flex">
+<span>async def <span class="ident">query_params</span></span>(<span>search: Optional[str] = None, offset: int = 0, limit: int = 10) ‑> <a title="shopapi.helpers.dependencies.QueryParams" href="#shopapi.helpers.dependencies.QueryParams">QueryParams</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Default query parameters search, skip and limit</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def query_params(search: Optional[str] = None, offset: int = 0, limit: int = 10) -&gt; QueryParams:
+    &#34;&#34;&#34;Default query parameters search, skip and limit&#34;&#34;&#34;
+    if not 0 &lt; limit &lt;= 100:
+        raise exceptions.InvalidOperation(detail=&#34;`limit` must be at least 1 and at most 100&#34;)
+    if offset &lt; 0:
+        raise exceptions.InvalidOperation(detail=&#34;`offset` muset be &gt;= 0&#34;)
+    return QueryParams(search=search, offset=offset, limit=limit)</code></pre>
+</details>
+</dd>
 </dl>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="shopapi.helpers.dependencies.QueryParams"><code class="flex name class">
+<span>class <span class="ident">QueryParams</span></span>
+<span>(</span><span>search: Optional[str], offset: int = 0, limit: int = 10)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Named Tuple to contain query params</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class QueryParams(NamedTuple):
+    &#34;&#34;&#34;Named Tuple to contain query params&#34;&#34;&#34;
+
+    search: Optional[str]
+    offset: int = 0
+    limit: int = 10</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.tuple</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="shopapi.helpers.dependencies.QueryParams.limit"><code class="name">var <span class="ident">limit</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 2</p></div>
+</dd>
+<dt id="shopapi.helpers.dependencies.QueryParams.offset"><code class="name">var <span class="ident">offset</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 1</p></div>
+</dd>
+<dt id="shopapi.helpers.dependencies.QueryParams.search"><code class="name">var <span class="ident">search</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 0</p></div>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -187,6 +274,19 @@ Raises error if no token is found</p></div>
 <li><code><a title="shopapi.helpers.dependencies.get_user_role" href="#shopapi.helpers.dependencies.get_user_role">get_user_role</a></code></li>
 <li><code><a title="shopapi.helpers.dependencies.get_user_token" href="#shopapi.helpers.dependencies.get_user_token">get_user_token</a></code></li>
 <li><code><a title="shopapi.helpers.dependencies.get_user_token_strict" href="#shopapi.helpers.dependencies.get_user_token_strict">get_user_token_strict</a></code></li>
+<li><code><a title="shopapi.helpers.dependencies.query_params" href="#shopapi.helpers.dependencies.query_params">query_params</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="shopapi.helpers.dependencies.QueryParams" href="#shopapi.helpers.dependencies.QueryParams">QueryParams</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.helpers.dependencies.QueryParams.limit" href="#shopapi.helpers.dependencies.QueryParams.limit">limit</a></code></li>
+<li><code><a title="shopapi.helpers.dependencies.QueryParams.offset" href="#shopapi.helpers.dependencies.QueryParams.offset">offset</a></code></li>
+<li><code><a title="shopapi.helpers.dependencies.QueryParams.search" href="#shopapi.helpers.dependencies.QueryParams.search">search</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

@@ -50,7 +50,7 @@ from shopapi import actions
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix=&#34;/auth&#34;, tags=[&#34;authentication&#34;])
+router = APIRouter(prefix=&#34;/auth&#34;, tags=[&#34;Authentication&#34;])
 
 
 def _provider_factory(provider: str) -&gt; SSOBase:
@@ -77,7 +77,7 @@ def _provider_factory(provider: str) -&gt; SSOBase:
                 client_secret=Config.SSO.microsoft_client_secret,
                 redirect_uri=redirect_uri,
             )
-    raise NotImplementedError(f&#34;Provider &#39;{provider}&#39; is not implemented or not allowed&#34;)
+    raise exceptions.InvalidOperation(detail=f&#34;Provider &#39;{provider}&#39; is not implemented or not allowed&#34;)
 
 
 @router.post(&#34;/login&#34;)

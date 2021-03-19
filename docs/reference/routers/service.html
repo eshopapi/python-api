@@ -33,18 +33,17 @@
 from typing import List
 from fastapi import APIRouter
 from shopapi.helpers import exceptions
-from shopapi.schemas import schemas, models
+from shopapi.schemas import schemas, models, api
 from shopapi.schemas.schemas import (
     ADMIN,
     EDITOR,
     VIEWER,
-    ROLE_ADMIN_ID,
-    ROLE_EDITOR_ID,
-    ROLE_PUBLIC_ID,
-    ROLE_VIEWER_ID,
 )
 
-router = APIRouter(prefix=&#34;/service&#34;, tags=[&#34;service&#34;])
+from shopapi.constants import ROLE_ADMIN_ID, ROLE_EDITOR_ID, ROLE_PUBLIC_ID, ROLE_VIEWER_ID
+from shopapi.helpers import demo
+
+router = APIRouter(prefix=&#34;/service&#34;, tags=[&#34;Service&#34;])
 
 default_roles: List[schemas.RoleInput] = [
     schemas.RoleInput(id=ROLE_ADMIN_ID, title=&#34;admin&#34;, users=ADMIN, roles=ADMIN),
@@ -65,7 +64,17 @@ async def service_db_init():
     for role in default_roles:
         await models.Role.create(**role.dict(exclude_none=True))
 
-    await models.Shop.set_initialized(True)</code></pre>
+    await models.Shop.set_initialized(True)
+
+
+@router.get(&#34;/demo-data&#34;)
+async def service_demo_data():
+    &#34;&#34;&#34;Insert demo data&#34;&#34;&#34;
+    if await models.Shop.is_production():
+        raise exceptions.InvalidOperation(detail=&#34;The shop is in production mode, this is not doable.&#34;)
+    for plain_user in demo.users:
+        reg_user = api.RegisterUserIn.from_plain(plain_user)
+        await models.User.create(**reg_user.dict(exclude_none=True))</code></pre>
 </details>
 </section>
 <section>
@@ -98,6 +107,25 @@ async def service_db_init():
     await models.Shop.set_initialized(True)</code></pre>
 </details>
 </dd>
+<dt id="shopapi.routers.service.service_demo_data"><code class="name flex">
+<span>async def <span class="ident">service_demo_data</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Insert demo data</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@router.get(&#34;/demo-data&#34;)
+async def service_demo_data():
+    &#34;&#34;&#34;Insert demo data&#34;&#34;&#34;
+    if await models.Shop.is_production():
+        raise exceptions.InvalidOperation(detail=&#34;The shop is in production mode, this is not doable.&#34;)
+    for plain_user in demo.users:
+        reg_user = api.RegisterUserIn.from_plain(plain_user)
+        await models.User.create(**reg_user.dict(exclude_none=True))</code></pre>
+</details>
+</dd>
 </dl>
 </section>
 <section>
@@ -117,6 +145,7 @@ async def service_db_init():
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="shopapi.routers.service.service_db_init" href="#shopapi.routers.service.service_db_init">service_db_init</a></code></li>
+<li><code><a title="shopapi.routers.service.service_demo_data" href="#shopapi.routers.service.service_demo_data">service_demo_data</a></code></li>
 </ul>
 </li>
 </ul>

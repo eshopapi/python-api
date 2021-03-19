@@ -144,6 +144,7 @@ async def get_user_by_email(email: str) -&gt; Optional[schemas.UserFromDB]:
     user = await models.User.filter(email=email).first()
     if not user:
         return None
+    await user.fetch_related(&#34;role&#34;)
     return schemas.UserFromDB.from_orm(user)
 
 
@@ -211,6 +212,7 @@ If the user does not exist, it is created first</p></div>
     user = await models.User.filter(email=email).first()
     if not user:
         return None
+    await user.fetch_related(&#34;role&#34;)
     return schemas.UserFromDB.from_orm(user)</code></pre>
 </details>
 </dd>

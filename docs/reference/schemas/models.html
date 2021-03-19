@@ -30,7 +30,7 @@
 <pre><code class="python">&#34;&#34;&#34;Database models for Tortoise-ORM operations
 &#34;&#34;&#34;
 
-from typing import Optional
+from typing import List, Optional
 from tortoise import fields
 from tortoise.models import Model
 
@@ -65,12 +65,35 @@ class BaseModel(Model):
     updated_at = fields.DatetimeField(auto_now=True)
     deleted = fields.BooleanField(default=False)
 
+    @staticmethod
+    def get_search_fields() -&gt; List[str]:
+        &#34;&#34;&#34;List fields that support searching in the current model&#34;&#34;&#34;
+        return []
+
 
 class Shop(BaseModel):
     &#34;&#34;&#34;Shop&#34;&#34;&#34;
 
     key = fields.CharField(unique=True, max_length=32, index=True)
     value = fields.CharField(max_length=1024, null=True)  # type: str
+
+    @classmethod
+    async def get_bool(cls, key: str) -&gt; bool:
+        &#34;&#34;&#34;Returns flag from the database by its key&#34;&#34;&#34;
+        dbmod = await cls.get_settings(key)
+        if dbmod is None or dbmod.value is None:
+            return False
+        return boolstr(dbmod.value)
+
+    @classmethod
+    async def set_bool(cls, key: str, val: bool = True):
+        &#34;&#34;&#34;Set flag in the database by its key&#34;&#34;&#34;
+        dbmod = await cls.get_settings(key)
+        if dbmod is None:
+            await cls.create(key=key, value=strbool(val))
+        else:
+            dbmod.value = strbool(val)
+            await dbmod.save()
 
     @classmethod
     async def get_settings(cls, key: str) -&gt; Optional[&#34;Shop&#34;]:
@@ -83,20 +106,22 @@ class Shop(BaseModel):
     @classmethod
     async def is_initialized(cls) -&gt; bool:
         &#34;&#34;&#34;Returns True if the Shop has already been initialized&#34;&#34;&#34;
-        dbmod = await cls.get_settings(&#34;initialized&#34;)
-        if dbmod is None or dbmod.value is None:
-            return False
-        return boolstr(dbmod.value)
+        return await cls.get_bool(&#34;initialized&#34;)
 
     @classmethod
     async def set_initialized(cls, val: bool = True):
         &#34;&#34;&#34;Set initialized flag&#34;&#34;&#34;
-        dbmod = await cls.get_settings(&#34;initialized&#34;)
-        if dbmod is None:
-            await cls.create(key=&#34;initialized&#34;, value=strbool(val))
-        else:
-            dbmod.value = strbool(val)
-            await dbmod.save()
+        await cls.set_bool(&#34;initialized&#34;, val)
+
+    @classmethod
+    async def is_production(cls) -&gt; bool:
+        &#34;&#34;&#34;Returns True if the Shop is in production mode&#34;&#34;&#34;
+        return await cls.get_bool(&#34;production&#34;)
+
+    @classmethod
+    async def set_production(cls, val: bool = True):
+        &#34;&#34;&#34;Set production flag&#34;&#34;&#34;
+        await cls.set_bool(&#34;production&#34;, val)
 
 
 class Role(BaseModel):
@@ -119,6 +144,10 @@ class User(BaseModel):
     role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
         &#34;models.Role&#34;, related_name=&#34;assigned_users&#34;
     )  # type: ignore
+
+    @staticmethod
+    def get_search_fields() -&gt; List[str]:
+        return [&#34;email&#34;, &#34;first_name&#34;, &#34;last_name&#34;]
 
 
 class OpenID(BaseModel):
@@ -190,7 +219,12 @@ class OpenID(BaseModel):
     id = fields.IntField(pk=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
-    deleted = fields.BooleanField(default=False)</code></pre>
+    deleted = fields.BooleanField(default=False)
+
+    @staticmethod
+    def get_search_fields() -&gt; List[str]:
+        &#34;&#34;&#34;List fields that support searching in the current model&#34;&#34;&#34;
+        return []</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -203,6 +237,24 @@ class OpenID(BaseModel):
 <li><a title="shopapi.schemas.models.Shop" href="#shopapi.schemas.models.Shop">Shop</a></li>
 <li><a title="shopapi.schemas.models.User" href="#shopapi.schemas.models.User">User</a></li>
 </ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="shopapi.schemas.models.BaseModel.get_search_fields"><code class="name flex">
+<span>def <span class="ident">get_search_fields</span></span>(<span>) ‑> List[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>List fields that support searching in the current model</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def get_search_fields() -&gt; List[str]:
+    &#34;&#34;&#34;List fields that support searching in the current model&#34;&#34;&#34;
+    return []</code></pre>
+</details>
+</dd>
+</dl>
 </dd>
 <dt id="shopapi.schemas.models.OpenID"><code class="flex name class">
 <span>class <span class="ident">OpenID</span></span>
@@ -230,6 +282,14 @@ class OpenID(BaseModel):
 <ul class="hlist">
 <li><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></li>
 <li>tortoise.models.Model</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.models.BaseModel.get_search_fields" href="#shopapi.schemas.models.BaseModel.get_search_fields">get_search_fields</a></code></li>
+</ul>
+</li>
 </ul>
 </dd>
 <dt id="shopapi.schemas.models.Role"><code class="flex name class">
@@ -262,6 +322,14 @@ class OpenID(BaseModel):
 <div class="desc"></div>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.models.BaseModel.get_search_fields" href="#shopapi.schemas.models.BaseModel.get_search_fields">get_search_fields</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 <dt id="shopapi.schemas.models.Shop"><code class="flex name class">
 <span>class <span class="ident">Shop</span></span>
@@ -280,6 +348,24 @@ class OpenID(BaseModel):
     value = fields.CharField(max_length=1024, null=True)  # type: str
 
     @classmethod
+    async def get_bool(cls, key: str) -&gt; bool:
+        &#34;&#34;&#34;Returns flag from the database by its key&#34;&#34;&#34;
+        dbmod = await cls.get_settings(key)
+        if dbmod is None or dbmod.value is None:
+            return False
+        return boolstr(dbmod.value)
+
+    @classmethod
+    async def set_bool(cls, key: str, val: bool = True):
+        &#34;&#34;&#34;Set flag in the database by its key&#34;&#34;&#34;
+        dbmod = await cls.get_settings(key)
+        if dbmod is None:
+            await cls.create(key=key, value=strbool(val))
+        else:
+            dbmod.value = strbool(val)
+            await dbmod.save()
+
+    @classmethod
     async def get_settings(cls, key: str) -&gt; Optional[&#34;Shop&#34;]:
         &#34;&#34;&#34;Get settings by key&#34;&#34;&#34;
         dbmod = await cls.filter(key=key).first()
@@ -290,20 +376,22 @@ class OpenID(BaseModel):
     @classmethod
     async def is_initialized(cls) -&gt; bool:
         &#34;&#34;&#34;Returns True if the Shop has already been initialized&#34;&#34;&#34;
-        dbmod = await cls.get_settings(&#34;initialized&#34;)
-        if dbmod is None or dbmod.value is None:
-            return False
-        return boolstr(dbmod.value)
+        return await cls.get_bool(&#34;initialized&#34;)
 
     @classmethod
     async def set_initialized(cls, val: bool = True):
         &#34;&#34;&#34;Set initialized flag&#34;&#34;&#34;
-        dbmod = await cls.get_settings(&#34;initialized&#34;)
-        if dbmod is None:
-            await cls.create(key=&#34;initialized&#34;, value=strbool(val))
-        else:
-            dbmod.value = strbool(val)
-            await dbmod.save()</code></pre>
+        await cls.set_bool(&#34;initialized&#34;, val)
+
+    @classmethod
+    async def is_production(cls) -&gt; bool:
+        &#34;&#34;&#34;Returns True if the Shop is in production mode&#34;&#34;&#34;
+        return await cls.get_bool(&#34;production&#34;)
+
+    @classmethod
+    async def set_production(cls, val: bool = True):
+        &#34;&#34;&#34;Set production flag&#34;&#34;&#34;
+        await cls.set_bool(&#34;production&#34;, val)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -312,6 +400,24 @@ class OpenID(BaseModel):
 </ul>
 <h3>Static methods</h3>
 <dl>
+<dt id="shopapi.schemas.models.Shop.get_bool"><code class="name flex">
+<span>async def <span class="ident">get_bool</span></span>(<span>key: str) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns flag from the database by its key</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def get_bool(cls, key: str) -&gt; bool:
+    &#34;&#34;&#34;Returns flag from the database by its key&#34;&#34;&#34;
+    dbmod = await cls.get_settings(key)
+    if dbmod is None or dbmod.value is None:
+        return False
+    return boolstr(dbmod.value)</code></pre>
+</details>
+</dd>
 <dt id="shopapi.schemas.models.Shop.get_settings"><code class="name flex">
 <span>async def <span class="ident">get_settings</span></span>(<span>key: str) ‑> Optional[<a title="shopapi.schemas.models.Shop" href="#shopapi.schemas.models.Shop">Shop</a>]</span>
 </code></dt>
@@ -342,10 +448,42 @@ async def get_settings(cls, key: str) -&gt; Optional[&#34;Shop&#34;]:
 <pre><code class="python">@classmethod
 async def is_initialized(cls) -&gt; bool:
     &#34;&#34;&#34;Returns True if the Shop has already been initialized&#34;&#34;&#34;
-    dbmod = await cls.get_settings(&#34;initialized&#34;)
-    if dbmod is None or dbmod.value is None:
-        return False
-    return boolstr(dbmod.value)</code></pre>
+    return await cls.get_bool(&#34;initialized&#34;)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.models.Shop.is_production"><code class="name flex">
+<span>async def <span class="ident">is_production</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns True if the Shop is in production mode</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def is_production(cls) -&gt; bool:
+    &#34;&#34;&#34;Returns True if the Shop is in production mode&#34;&#34;&#34;
+    return await cls.get_bool(&#34;production&#34;)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.models.Shop.set_bool"><code class="name flex">
+<span>async def <span class="ident">set_bool</span></span>(<span>key: str, val: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set flag in the database by its key</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def set_bool(cls, key: str, val: bool = True):
+    &#34;&#34;&#34;Set flag in the database by its key&#34;&#34;&#34;
+    dbmod = await cls.get_settings(key)
+    if dbmod is None:
+        await cls.create(key=key, value=strbool(val))
+    else:
+        dbmod.value = strbool(val)
+        await dbmod.save()</code></pre>
 </details>
 </dd>
 <dt id="shopapi.schemas.models.Shop.set_initialized"><code class="name flex">
@@ -360,15 +498,33 @@ async def is_initialized(cls) -&gt; bool:
 <pre><code class="python">@classmethod
 async def set_initialized(cls, val: bool = True):
     &#34;&#34;&#34;Set initialized flag&#34;&#34;&#34;
-    dbmod = await cls.get_settings(&#34;initialized&#34;)
-    if dbmod is None:
-        await cls.create(key=&#34;initialized&#34;, value=strbool(val))
-    else:
-        dbmod.value = strbool(val)
-        await dbmod.save()</code></pre>
+    await cls.set_bool(&#34;initialized&#34;, val)</code></pre>
+</details>
+</dd>
+<dt id="shopapi.schemas.models.Shop.set_production"><code class="name flex">
+<span>async def <span class="ident">set_production</span></span>(<span>val: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set production flag</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+async def set_production(cls, val: bool = True):
+    &#34;&#34;&#34;Set production flag&#34;&#34;&#34;
+    await cls.set_bool(&#34;production&#34;, val)</code></pre>
 </details>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.models.BaseModel.get_search_fields" href="#shopapi.schemas.models.BaseModel.get_search_fields">get_search_fields</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 <dt id="shopapi.schemas.models.User"><code class="flex name class">
 <span>class <span class="ident">User</span></span>
@@ -390,7 +546,11 @@ async def set_initialized(cls, val: bool = True):
     picture = fields.CharField(max_length=1024, null=True)
     role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
         &#34;models.Role&#34;, related_name=&#34;assigned_users&#34;
-    )  # type: ignore</code></pre>
+    )  # type: ignore
+
+    @staticmethod
+    def get_search_fields() -&gt; List[str]:
+        return [&#34;email&#34;, &#34;first_name&#34;, &#34;last_name&#34;]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -404,6 +564,14 @@ async def set_initialized(cls, val: bool = True):
 <div class="desc"></div>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></b></code>:
+<ul class="hlist">
+<li><code><a title="shopapi.schemas.models.BaseModel.get_search_fields" href="#shopapi.schemas.models.BaseModel.get_search_fields">get_search_fields</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 </dl>
 </section>
@@ -429,6 +597,9 @@ async def set_initialized(cls, val: bool = True):
 <ul>
 <li>
 <h4><code><a title="shopapi.schemas.models.BaseModel" href="#shopapi.schemas.models.BaseModel">BaseModel</a></code></h4>
+<ul class="">
+<li><code><a title="shopapi.schemas.models.BaseModel.get_search_fields" href="#shopapi.schemas.models.BaseModel.get_search_fields">get_search_fields</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="shopapi.schemas.models.OpenID" href="#shopapi.schemas.models.OpenID">OpenID</a></code></h4>
@@ -441,10 +612,14 @@ async def set_initialized(cls, val: bool = True):
 </li>
 <li>
 <h4><code><a title="shopapi.schemas.models.Shop" href="#shopapi.schemas.models.Shop">Shop</a></code></h4>
-<ul class="">
+<ul class="two-column">
+<li><code><a title="shopapi.schemas.models.Shop.get_bool" href="#shopapi.schemas.models.Shop.get_bool">get_bool</a></code></li>
 <li><code><a title="shopapi.schemas.models.Shop.get_settings" href="#shopapi.schemas.models.Shop.get_settings">get_settings</a></code></li>
 <li><code><a title="shopapi.schemas.models.Shop.is_initialized" href="#shopapi.schemas.models.Shop.is_initialized">is_initialized</a></code></li>
+<li><code><a title="shopapi.schemas.models.Shop.is_production" href="#shopapi.schemas.models.Shop.is_production">is_production</a></code></li>
+<li><code><a title="shopapi.schemas.models.Shop.set_bool" href="#shopapi.schemas.models.Shop.set_bool">set_bool</a></code></li>
 <li><code><a title="shopapi.schemas.models.Shop.set_initialized" href="#shopapi.schemas.models.Shop.set_initialized">set_initialized</a></code></li>
+<li><code><a title="shopapi.schemas.models.Shop.set_production" href="#shopapi.schemas.models.Shop.set_production">set_production</a></code></li>
 </ul>
 </li>
 <li>

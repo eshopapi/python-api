@@ -90,12 +90,18 @@ async def decode_jwt(token: str) -&gt; Mapping:
     try:
         payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
         expires = datetime.fromtimestamp(float(payload.get(&#34;exp&#34;, 0)))
-        if datetime.utcnow() &gt;= expires:
+        not_before = datetime.fromtimestamp(float(payload.get(&#34;nbf&#34;, 0)))
+        now = datetime.utcnow()
+        if expires &lt; now:
+            logger.info(&#34;Expired token: %s, expires: %s&#34;, payload, expires)
             raise exceptions.CredentialsExpired()
+        if now &lt; not_before:
+            logger.info(&#34;Token not valid yet: %s, not-before: %s&#34;, payload, not_before)
+            raise exceptions.CredentialsException()
         return payload
     except JWTError as error:
         logger.error(error)
-        raise exceptions.CredentialsException()  # pylint: disable=raise-missing-from
+        raise exceptions.CredentialsException()
 
 
 async def user_from_jwt(token: str) -&gt; schemas.UserFromDB:
@@ -176,12 +182,18 @@ Optional <code>expires</code> specifies when the token expires, otherwise, defau
     try:
         payload = jwt.decode(token, Config.secret_key, algorithms=[constants.JWT_ALGORITHM])
         expires = datetime.fromtimestamp(float(payload.get(&#34;exp&#34;, 0)))
-        if datetime.utcnow() &gt;= expires:
+        not_before = datetime.fromtimestamp(float(payload.get(&#34;nbf&#34;, 0)))
+        now = datetime.utcnow()
+        if expires &lt; now:
+            logger.info(&#34;Expired token: %s, expires: %s&#34;, payload, expires)
             raise exceptions.CredentialsExpired()
+        if now &lt; not_before:
+            logger.info(&#34;Token not valid yet: %s, not-before: %s&#34;, payload, not_before)
+            raise exceptions.CredentialsException()
         return payload
     except JWTError as error:
         logger.error(error)
-        raise exceptions.CredentialsException()  # pylint: disable=raise-missing-from</code></pre>
+        raise exceptions.CredentialsException()</code></pre>
 </details>
 </dd>
 <dt id="shopapi.helpers.security.get_password_hash"><code class="name flex">

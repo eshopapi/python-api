@@ -37,6 +37,7 @@ from typing import Mapping, Optional, Union
 from pydantic import BaseModel, EmailStr  # pylint: disable=no-name-in-module
 from fastapi_sso.sso.base import OpenID as OpenIDSSO
 
+from shopapi import constants
 
 class ORMModel(BaseModel):
     &#34;&#34;&#34;Base for orm models&#34;&#34;&#34;
@@ -74,12 +75,6 @@ ADMIN = Permission.READ | Permission.WRITE | Permission.DELETE
 EDITOR = Permission.READ | Permission.WRITE
 VIEWER = Permission.READ
 
-ROLE_ADMIN_ID = 1
-ROLE_PUBLIC_ID = 2
-ROLE_EDITOR_ID = 3
-ROLE_VIEWER_ID = 4
-
-
 class RoleInput(ORMModel):
     &#34;&#34;&#34;Class to contain policies&#34;&#34;&#34;
 
@@ -105,7 +100,7 @@ class UserDBInput(ORMModel):
     last_name: Optional[str]
     picture: Optional[str]
     password: Optional[bytes]
-    role_id: Optional[int] = ROLE_PUBLIC_ID
+    role_id: Optional[int] = constants.ROLE_PUBLIC_ID
     role: Optional[Role] = None
 
 
@@ -589,7 +584,7 @@ def write(self) -&gt; bool:
     last_name: Optional[str]
     picture: Optional[str]
     password: Optional[bytes]
-    role_id: Optional[int] = ROLE_PUBLIC_ID
+    role_id: Optional[int] = constants.ROLE_PUBLIC_ID
     role: Optional[Role] = None</code></pre>
 </details>
 <h3>Ancestors</h3>

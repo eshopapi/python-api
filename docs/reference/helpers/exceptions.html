@@ -29,14 +29,31 @@
 </summary>
 <pre><code class="python">&#34;&#34;&#34;Exceptions&#34;&#34;&#34;
 
-from typing import Optional
+from typing import Dict, Optional
 from fastapi import HTTPException, status
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from shopapi.config import Config
 
 
-class UnexpectedException(HTTPException):
+class ExtendedHTTPException(HTTPException):
+    &#34;&#34;&#34;Display error code together with detail&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        status_code: Optional[int] = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail: Optional[str] = None,
+        headers: Optional[Dict] = None,
+    ):
+        status_code = status_code or status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail = detail or &#34;Unexpected error ocurred&#34;
+        headers = headers or {}
+        super().__init__(
+            status_code=status_code, headers=headers, detail={&#34;message&#34;: detail, &#34;code&#34;: self.__class__.__name__}
+        )
+
+
+class UnexpectedException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever an unexpected error ocurrs. Displays support contact to the user.&#34;&#34;&#34;
 
     def __init__(
@@ -47,7 +64,7 @@ class UnexpectedException(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class LoginError(HTTPException):
+class LoginError(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever login-specific error ocurrs&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_401_UNAUTHORIZED, detail: Optional[str] = None):
@@ -68,7 +85,7 @@ class LoginReusedEmailError(LoginError):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
-class UserAlreadyExists(HTTPException):
+class UserAlreadyExists(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when user is about to register but his email already exists&#34;&#34;&#34;
 
     def __init__(self, email: Optional[str] = None):
@@ -76,7 +93,7 @@ class UserAlreadyExists(HTTPException):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
-class CredentialsException(HTTPException):
+class CredentialsException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when credentials provided by the user cannot be verified&#34;&#34;&#34;
 
     def __init__(self):
@@ -87,7 +104,7 @@ class CredentialsException(HTTPException):
         )
 
 
-class AuthenticationException(HTTPException):
+class AuthenticationException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when the user could not be authenticated&#34;&#34;&#34;
 
     def __init__(self):
@@ -98,7 +115,7 @@ class AuthenticationException(HTTPException):
         )
 
 
-class SecurityException(HTTPException):
+class SecurityException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when a suspection that someone is trying to do something ugly rises&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_401_UNAUTHORIZED, detail: Optional[str] = None):
@@ -110,7 +127,7 @@ class SecurityException(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class ResourceExistsException(HTTPException):
+class ResourceExistsException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever there is an attempt to create instance that does not match UNIQUE constraint&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_409_CONFLICT, detail: Optional[str] = None):
@@ -122,7 +139,7 @@ class ResourceExistsException(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class InvalidOperation(HTTPException):
+class InvalidOperation(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever there was an attempt to do something that doesn&#39;t make any sense&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_400_BAD_REQUEST, detail: Optional[str] = None):
@@ -131,7 +148,7 @@ class InvalidOperation(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class InsufficientPermissions(HTTPException):
+class InsufficientPermissions(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever somebody attempts to do something they are not allowed to&#34;&#34;&#34;
 
     def __init__(self, required: Optional[str] = None):
@@ -140,14 +157,14 @@ class InsufficientPermissions(HTTPException):
         super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
-class CredentialsExpired(HTTPException):
+class CredentialsExpired(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when credentials in token expire&#34;&#34;&#34;
 
     def __init__(self):
         super().__init__(status_code=HTTP_401_UNAUTHORIZED, detail=&#34;Credentials expired&#34;)
 
 
-class ResourceNotFound(HTTPException):
+class ResourceNotFound(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when specified resource was not found&#34;&#34;&#34;
 
     def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[str] = None):
@@ -174,7 +191,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class AuthenticationException(HTTPException):
+<pre><code class="python">class AuthenticationException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when the user could not be authenticated&#34;&#34;&#34;
 
     def __init__(self):
@@ -186,6 +203,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -201,7 +219,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class CredentialsException(HTTPException):
+<pre><code class="python">class CredentialsException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when credentials provided by the user cannot be verified&#34;&#34;&#34;
 
     def __init__(self):
@@ -213,6 +231,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -228,7 +247,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class CredentialsExpired(HTTPException):
+<pre><code class="python">class CredentialsExpired(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when credentials in token expire&#34;&#34;&#34;
 
     def __init__(self):
@@ -236,10 +255,59 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
 <li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="shopapi.helpers.exceptions.ExtendedHTTPException"><code class="flex name class">
+<span>class <span class="ident">ExtendedHTTPException</span></span>
+<span>(</span><span>status_code: Optional[int] = 500, detail: Optional[str] = None, headers: Optional[Dict] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Display error code together with detail</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ExtendedHTTPException(HTTPException):
+    &#34;&#34;&#34;Display error code together with detail&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        status_code: Optional[int] = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail: Optional[str] = None,
+        headers: Optional[Dict] = None,
+    ):
+        status_code = status_code or status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail = detail or &#34;Unexpected error ocurred&#34;
+        headers = headers or {}
+        super().__init__(
+            status_code=status_code, headers=headers, detail={&#34;message&#34;: detail, &#34;code&#34;: self.__class__.__name__}
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>fastapi.exceptions.HTTPException</li>
+<li>starlette.exceptions.HTTPException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.AuthenticationException" href="#shopapi.helpers.exceptions.AuthenticationException">AuthenticationException</a></li>
+<li><a title="shopapi.helpers.exceptions.CredentialsException" href="#shopapi.helpers.exceptions.CredentialsException">CredentialsException</a></li>
+<li><a title="shopapi.helpers.exceptions.CredentialsExpired" href="#shopapi.helpers.exceptions.CredentialsExpired">CredentialsExpired</a></li>
+<li><a title="shopapi.helpers.exceptions.InsufficientPermissions" href="#shopapi.helpers.exceptions.InsufficientPermissions">InsufficientPermissions</a></li>
+<li><a title="shopapi.helpers.exceptions.InvalidOperation" href="#shopapi.helpers.exceptions.InvalidOperation">InvalidOperation</a></li>
+<li><a title="shopapi.helpers.exceptions.LoginError" href="#shopapi.helpers.exceptions.LoginError">LoginError</a></li>
+<li><a title="shopapi.helpers.exceptions.ResourceExistsException" href="#shopapi.helpers.exceptions.ResourceExistsException">ResourceExistsException</a></li>
+<li><a title="shopapi.helpers.exceptions.ResourceNotFound" href="#shopapi.helpers.exceptions.ResourceNotFound">ResourceNotFound</a></li>
+<li><a title="shopapi.helpers.exceptions.SecurityException" href="#shopapi.helpers.exceptions.SecurityException">SecurityException</a></li>
+<li><a title="shopapi.helpers.exceptions.UnexpectedException" href="#shopapi.helpers.exceptions.UnexpectedException">UnexpectedException</a></li>
+<li><a title="shopapi.helpers.exceptions.UserAlreadyExists" href="#shopapi.helpers.exceptions.UserAlreadyExists">UserAlreadyExists</a></li>
 </ul>
 </dd>
 <dt id="shopapi.helpers.exceptions.InsufficientPermissions"><code class="flex name class">
@@ -252,7 +320,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class InsufficientPermissions(HTTPException):
+<pre><code class="python">class InsufficientPermissions(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever somebody attempts to do something they are not allowed to&#34;&#34;&#34;
 
     def __init__(self, required: Optional[str] = None):
@@ -262,6 +330,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -278,7 +347,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class InvalidOperation(HTTPException):
+<pre><code class="python">class InvalidOperation(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever there was an attempt to do something that doesn&#39;t make any sense&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_400_BAD_REQUEST, detail: Optional[str] = None):
@@ -288,6 +357,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -304,7 +374,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class LoginError(HTTPException):
+<pre><code class="python">class LoginError(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever login-specific error ocurrs&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_401_UNAUTHORIZED, detail: Optional[str] = None):
@@ -314,6 +384,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -348,6 +419,7 @@ class ResourceNotFound(HTTPException):
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="shopapi.helpers.exceptions.LoginError" href="#shopapi.helpers.exceptions.LoginError">LoginError</a></li>
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -364,7 +436,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ResourceExistsException(HTTPException):
+<pre><code class="python">class ResourceExistsException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever there is an attempt to create instance that does not match UNIQUE constraint&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_409_CONFLICT, detail: Optional[str] = None):
@@ -377,6 +449,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -393,7 +466,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ResourceNotFound(HTTPException):
+<pre><code class="python">class ResourceNotFound(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when specified resource was not found&#34;&#34;&#34;
 
     def __init__(self, res_type: str = &#34;resource&#34;, res_name: Optional[str] = None):
@@ -403,6 +476,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -419,7 +493,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class SecurityException(HTTPException):
+<pre><code class="python">class SecurityException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when a suspection that someone is trying to do something ugly rises&#34;&#34;&#34;
 
     def __init__(self, status_code: Optional[int] = status.HTTP_401_UNAUTHORIZED, detail: Optional[str] = None):
@@ -432,6 +506,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -448,7 +523,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class UnexpectedException(HTTPException):
+<pre><code class="python">class UnexpectedException(ExtendedHTTPException):
     &#34;&#34;&#34;Raised whenever an unexpected error ocurrs. Displays support contact to the user.&#34;&#34;&#34;
 
     def __init__(
@@ -460,6 +535,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -476,7 +552,7 @@ class ResourceNotFound(HTTPException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class UserAlreadyExists(HTTPException):
+<pre><code class="python">class UserAlreadyExists(ExtendedHTTPException):
     &#34;&#34;&#34;Raised when user is about to register but his email already exists&#34;&#34;&#34;
 
     def __init__(self, email: Optional[str] = None):
@@ -485,6 +561,7 @@ class ResourceNotFound(HTTPException):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></li>
 <li>fastapi.exceptions.HTTPException</li>
 <li>starlette.exceptions.HTTPException</li>
 <li>builtins.Exception</li>
@@ -515,6 +592,9 @@ class ResourceNotFound(HTTPException):
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.CredentialsExpired" href="#shopapi.helpers.exceptions.CredentialsExpired">CredentialsExpired</a></code></h4>
+</li>
+<li>
+<h4><code><a title="shopapi.helpers.exceptions.ExtendedHTTPException" href="#shopapi.helpers.exceptions.ExtendedHTTPException">ExtendedHTTPException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="shopapi.helpers.exceptions.InsufficientPermissions" href="#shopapi.helpers.exceptions.InsufficientPermissions">InsufficientPermissions</a></code></h4>
