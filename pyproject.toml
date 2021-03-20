@@ -18,7 +18,7 @@ db-init-migrations = "aerich init -t shopapi.schemas.models.TORTOISE_ORM"
 db-init = "aerich init-db"
 docs = "bash build-docs.sh"
 generate-secure-key = "openssl rand -hex 32"
-pylint = "pylint shopapi"
+pylint = "pylint main.py shopapi"
 mypy = "mypy --config-file pyproject.toml main.py shopapi/"
 lint = "sh -c 'poe pylint; poe mypy'"
 
@@ -33,6 +33,7 @@ config-proxy = "^0.1.5"
 fastapi-sso = "^0.2.4"
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-jose = {extras = ["cryptography"], version = "^3.2.0"}
+asyncpg = "^0.22.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
