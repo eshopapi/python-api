@@ -1,10 +1,8 @@
 """Main module for running shopapi server
 """
 
-import os
 import logging
 from fastapi import FastAPI
-from dotenv import load_dotenv
 
 from tortoise.contrib.fastapi import register_tortoise
 
@@ -15,14 +13,13 @@ from shopapi.config import build_db_url
 logging.basicConfig(format="[%(asctime)s] <%(name)s> %(levelname)s: %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-_basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(_basedir, ".env"))
 
 tags = [
     {"name": "General", "description": "Generic endpoints that belong nowhere else."},
     {"name": "Authentication", "description": "Authenticate user, create openid and manage openid associations."},
     {"name": "Users", "description": "Endpoints used to manage users and role associations."},
     {"name": "Roles", "description": "Endpoints used to manage user roles"},
+    {"name": "Tags", "description": "Tags allow better products and categories sub-categorization."},
     {"name": "Service", "description": "Service endpoint used to manager ShopAPI environment and deployment."},
 ]
 
@@ -46,6 +43,7 @@ def index():
 app.include_router(routers.auth.router)
 app.include_router(routers.user.router)
 app.include_router(routers.service.router)
-app.include_router(routers.roles.router)
+app.include_router(routers.role.router)
+app.include_router(routers.tag.router)
 
 register_tortoise(app, db_url=build_db_url(), modules={"models": ["shopapi.schemas.models"]}, generate_schemas=True)

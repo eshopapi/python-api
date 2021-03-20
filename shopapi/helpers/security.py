@@ -8,6 +8,7 @@ from typing import Mapping, Optional
 from jose import jwt
 from jose.exceptions import JWTError
 from passlib.context import CryptContext
+from tortoise.exceptions import DoesNotExist
 
 from shopapi.schemas import schemas, models
 from shopapi import constants
@@ -69,6 +70,21 @@ async def decode_jwt(token: str) -> Mapping:
         if now < not_before:
             logger.info("Token not valid yet: %s, not-before: %s", payload, not_before)
             raise exceptions.CredentialsException()
+        sid: Optional[int] = payload.get("sid")
+        if sid is None:
+            raise exceptions.CredentialsException()
+        try:
+            user_db = await models.User.get(id=sid)
+        except DoesNotExist as error:
+            logger.warning("Someone is probably trying to login with a non-existing account")
+            logger.warning(error)
+            logger.warning(payload)
+            raise exceptions.CredentialsException()
+        rid: Optional[int] = payload.get("rid")
+        if rid is None:
+            raise exceptions.CredentialsException()
+        if rid != (await user_db.role).id:
+            raise exceptions.CredentialsExpired()
         return payload
     except JWTError as error:
         logger.error(error)

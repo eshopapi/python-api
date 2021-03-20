@@ -7,6 +7,10 @@ from base64 import b64encode
 from typing import Any, List, Optional, Type
 import config_proxy
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class ConfigProxy(config_proxy.ConfigProxy):
     """ConfigProxy"""
@@ -78,6 +82,7 @@ class Config:
         user = StringProperty("database.user", "SHOPAPI__DB_USER").value
         password = StringProperty("database.password", "SHOPAPI__DB_PASS").value
         database = StringProperty("database.database", "SHOPAPI__DB_NAME", "shopapi").fvalue
+        uri = StringProperty("database.uri", "SHOPAPI__DB_URI", None).value
 
     class SSO:
         """SSO Settings"""
@@ -99,6 +104,8 @@ class Config:
 
 def build_db_url() -> str:
     """Build DB tortoise orm url for connection from Config object"""
+    if Config.Database.uri is not None:
+        return Config.Database.uri
     if Config.Database.backend == "sqlite":
         return f"sqlite://{Config.Database.host}"
     if Config.Database.backend == "postgres":

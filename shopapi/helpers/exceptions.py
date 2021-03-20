@@ -1,6 +1,6 @@
 """Exceptions"""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 from fastapi import HTTPException, status
 from starlette.status import HTTP_401_UNAUTHORIZED
 
@@ -122,8 +122,10 @@ class InvalidOperation(ExtendedHTTPException):
 class InsufficientPermissions(ExtendedHTTPException):
     """Raised whenever somebody attempts to do something they are not allowed to"""
 
-    def __init__(self, required: Optional[str] = None):
+    def __init__(self, required: Optional[Union[str, List[str]]] = None):
         required = required or "unknown"
+        if isinstance(required, list):
+            required = ", ".join(required)
         detail = f"You do not have sufficent permissions to perform this action. You need '{required}' permission."
         super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 

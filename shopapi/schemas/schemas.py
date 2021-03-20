@@ -20,6 +20,13 @@ class ORMModel(BaseModel):
         orm_mode = True
 
 
+class DateTimesMixin:
+    """Mixin that adds `created_at` and `updated_at` `datetime`s to schema"""
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
 class Permission(IntFlag):
     """Basic policies applicable to all resources"""
 
@@ -53,8 +60,11 @@ class RoleInputUser(ORMModel):
 
     title: str
 
-    users: Optional[Permission] = None
-    roles: Optional[Permission] = None
+    users: Permission = Permission(0)
+    roles: Permission = Permission(0)
+    tags: Permission = Permission(0)
+    categories: Permission = Permission(0)
+    products: Permission = Permission(0)
 
 
 class RoleInput(RoleInputUser):
@@ -62,11 +72,8 @@ class RoleInput(RoleInputUser):
 
     id: Optional[int]
 
-    users: Permission = Permission(0)
-    roles: Permission = Permission(0)
 
-
-class Role(RoleInput):
+class Role(RoleInput, DateTimesMixin):
     """Class to return roles from db"""
 
     id: int
@@ -107,13 +114,13 @@ class OpenID(BaseModel):
         return OpenID(**dct)
 
 
-class OpenIDFromDB(ORMModel, OpenID):
+class OpenIDFromDB(ORMModel, OpenID, DateTimesMixin):
     """OpenID"""
 
     id: int
 
 
-class UserFromDB(UserDBInput):
+class UserFromDB(UserDBInput, DateTimesMixin):
     """UserFromDB"""
 
     id: int
@@ -146,3 +153,21 @@ class UserToken(BaseModel):
             provider_id=token_info.get("pid"),
             role_id=token_info.get("rid"),
         )
+
+
+class TagUserInput(ORMModel):
+    """Tag input from user"""
+
+    name: str
+
+
+class TagInput(TagUserInput):
+    """Tag input"""
+
+    id: Optional[int]
+
+
+class Tag(TagInput, DateTimesMixin):
+    """Tag output from db"""
+
+    id: int

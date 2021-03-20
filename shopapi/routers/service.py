@@ -3,6 +3,7 @@
 
 from typing import List
 from fastapi import APIRouter
+from tortoise.exceptions import DoesNotExist
 from shopapi import actions
 from shopapi.helpers import exceptions
 from shopapi.schemas import schemas, models
@@ -18,10 +19,16 @@ from shopapi.helpers import demo
 router = APIRouter(prefix="/service", tags=["Service"])
 
 default_roles: List[schemas.RoleInput] = [
-    schemas.RoleInput(id=ROLE_ADMIN_ID, title="admin", users=ADMIN, roles=ADMIN),
+    schemas.RoleInput(
+        id=ROLE_ADMIN_ID, title="admin", users=ADMIN, roles=ADMIN, tags=ADMIN, categories=ADMIN, products=ADMIN
+    ),
     schemas.RoleInput(id=ROLE_PUBLIC_ID, title="public"),
-    schemas.RoleInput(id=ROLE_EDITOR_ID, title="editor", users=EDITOR, roles=EDITOR),
-    schemas.RoleInput(id=ROLE_VIEWER_ID, title="viewer", users=VIEWER, roles=VIEWER),
+    schemas.RoleInput(
+        id=ROLE_EDITOR_ID, title="editor", users=EDITOR, roles=EDITOR, tags=EDITOR, categories=EDITOR, products=EDITOR
+    ),
+    schemas.RoleInput(
+        id=ROLE_VIEWER_ID, title="viewer", users=VIEWER, roles=VIEWER, tags=VIEWER, categories=VIEWER, products=VIEWER
+    ),
 ]
 
 
@@ -46,3 +53,24 @@ async def service_demo_data():
         raise exceptions.InvalidOperation(detail="The shop is in production mode, this is not doable.")
     for plain_user in demo.users:
         await actions.user.create_user(plain_user)
+    for tag_input in demo.tags:
+        await models.Tag.create(**tag_input.dict(exclude_none=True))
+
+
+@router.delete("/demo-data")
+async def service_demo_data_delete():
+    """Delete demo data"""
+    if await models.Shop.is_production():
+        raise exceptions.InvalidOperation(detail="The shop is in production mode, this is not doable.")
+    for plain_user in demo.users:
+        try:
+            user_db = await models.User.get(email=plain_user.email)
+            await user_db.delete()
+        except DoesNotExist:
+            continue
+    for tag_input in demo.tags:
+        try:
+            tag_db = await models.Tag.get(name=tag_input.name)
+            await tag_db.delete()
+        except DoesNotExist:
+            continue

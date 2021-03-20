@@ -34,7 +34,6 @@ class BaseModel(Model):
     id = fields.IntField(pk=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
-    deleted = fields.BooleanField(default=False)
 
     @staticmethod
     def get_search_fields() -> List[str]:
@@ -106,6 +105,9 @@ class Role(BaseModel):
     roles = fields.IntField()
     assigned_users: fields.ReverseRelation["User"]
     users = fields.IntField()
+    tags = fields.IntField(default=0)
+    categories = fields.IntField(default=0)
+    products = fields.IntField(default=0)
 
     @staticmethod
     def get_search_fields() -> List[str]:
@@ -140,3 +142,36 @@ class OpenID(BaseModel):
     picture = fields.CharField(max_length=1024, null=True)
     provider = fields.CharField(max_length=32)
     provider_id = fields.CharField(max_length=64)
+
+
+class Tag(BaseModel):
+    """Tag"""
+
+    name = fields.CharField(max_length=256, unique=True)
+
+    @staticmethod
+    def get_search_fields() -> List[str]:
+        return ["name"]
+
+
+class Category(BaseModel):
+    """Category"""
+
+    title = fields.CharField(max_length=256, index=True)
+    parent_category: fields.ForeignKeyNullableRelation["Category"] = fields.ForeignKeyField(
+        "models.Category", related_name="child_categories", null=True
+    )  # type: ignore
+    child_categories = fields.ReverseRelation["Category"]
+    tags: fields.ManyToManyRelation["Tag"] = fields.ManyToManyField("models.Tag", through="category_tag")
+
+
+# TODO: stub
+class Product(BaseModel):
+    """Product"""
+
+    title = fields.CharField(max_length=256, index=True)
+    category: fields.ForeignKeyNullableRelation["Category"] = fields.ForeignKeyField(
+        "models.Category", null=True
+    )  # type:ignore
+    tags: fields.ManyToManyRelation["Tag"] = fields.ManyToManyField("models.Tag", through="product_tag")
+    short_description = fields.CharField(max_length=1024, index=True)

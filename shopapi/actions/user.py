@@ -8,11 +8,21 @@ from typing import Optional
 from starlette.responses import JSONResponse, RedirectResponse, Response
 from tortoise.exceptions import IntegrityError
 
+from shopapi.actions.base import ResourceOperator
 from shopapi.schemas import schemas, models, api
 from shopapi.helpers import exceptions, security
 from shopapi.config import Config
 
 logger = logging.getLogger(__name__)
+
+
+class UserOperator(ResourceOperator):
+    """CRUD operator over User"""
+
+    resource = "User"
+    model = models.User
+    schema = api.UserUpdateOut
+    role_name = "users"
 
 
 async def load_openid(openid: schemas.OpenID) -> Optional[schemas.OpenIDFromDB]:

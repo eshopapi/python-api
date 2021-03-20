@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/user", tags=["Users"])
 
+operator = actions.user.UserOperator()
+
 
 @router.get("/me", response_model=schemas.UserToken)
 async def user_info(user: schemas.UserToken = Depends(deps.get_user)):
