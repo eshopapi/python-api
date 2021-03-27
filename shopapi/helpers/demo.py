@@ -19,5 +19,16 @@ tags = [
     schemas.TagInput(name="sporty"),
     schemas.TagInput(name="black friday"),
     schemas.TagInput(name="absinth-like"),
-    schemas.TagInput(name="used")
+    schemas.TagInput(name="used"),
+]
+
+
+categories = [
+    schemas.CategoryInput(id=1, title="Men"),
+    schemas.CategoryInput(id=2, title="Women"),
+    schemas.CategoryInput(title="Ties", parent_category_id=1),
+    schemas.CategoryInput(title="Hats", parent_category_id=1),
+    schemas.CategoryInput(title="Shoes", parent_category_id=2),
+    schemas.CategoryInput(title="Shiny things", parent_category_id=2),
+    schemas.CategoryInput(title="Useless junk", parent_category_id=2),
 ]

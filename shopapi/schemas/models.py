@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from tortoise import fields
-from tortoise.models import Model
+from shopapi.schemas.base import BaseModelTortoise
 
 from shopapi.config import build_db_url
 
@@ -28,20 +28,7 @@ def boolstr(val: str) -> bool:
     return val.lower() in ("yes", "true", "1")
 
 
-class BaseModel(Model):
-    """BaseModel"""
-
-    id = fields.IntField(pk=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-
-    @staticmethod
-    def get_search_fields() -> List[str]:
-        """List fields that support searching in the current model"""
-        return []
-
-
-class Shop(BaseModel):
+class Shop(BaseModelTortoise):
     """Shop"""
 
     key = fields.CharField(unique=True, max_length=32, index=True)
@@ -98,7 +85,7 @@ class Shop(BaseModel):
         await cls.set_bool("production", val)
 
 
-class Role(BaseModel):
+class Role(BaseModelTortoise):
     """Role"""
 
     title = fields.CharField(unique=True, max_length=64)
@@ -114,11 +101,11 @@ class Role(BaseModel):
         return ["title"]
 
 
-class User(BaseModel):
+class User(BaseModelTortoise):
     """User"""
 
     email = fields.CharField(unique=True, max_length=256)
-    password = fields.BinaryField(null=True)
+    password_hash = fields.BinaryField(null=True)
     first_name = fields.CharField(max_length=64, null=True)
     last_name = fields.CharField(max_length=64, null=True)
     picture = fields.CharField(max_length=1024, null=True)
@@ -131,7 +118,7 @@ class User(BaseModel):
         return ["email", "first_name", "last_name"]
 
 
-class OpenID(BaseModel):
+class OpenID(BaseModelTortoise):
     """OpenID"""
 
     user = fields.ForeignKeyField("models.User", null=True)
@@ -144,29 +131,36 @@ class OpenID(BaseModel):
     provider_id = fields.CharField(max_length=64)
 
 
-class Tag(BaseModel):
+class Tag(BaseModelTortoise):
     """Tag"""
 
     name = fields.CharField(max_length=256, unique=True)
+    categories: fields.ReverseRelation["Category"]
 
     @staticmethod
     def get_search_fields() -> List[str]:
         return ["name"]
 
 
-class Category(BaseModel):
+class Category(BaseModelTortoise):
     """Category"""
 
-    title = fields.CharField(max_length=256, index=True)
+    title = fields.CharField(max_length=256, index=True, unique=True)
     parent_category: fields.ForeignKeyNullableRelation["Category"] = fields.ForeignKeyField(
         "models.Category", related_name="child_categories", null=True
     )  # type: ignore
     child_categories = fields.ReverseRelation["Category"]
-    tags: fields.ManyToManyRelation["Tag"] = fields.ManyToManyField("models.Tag", through="category_tag")
+    tags: fields.ManyToManyRelation["Tag"] = fields.ManyToManyField(
+        "models.Tag", through="category_tag", related_name="categories"
+    )
+
+    @staticmethod
+    def get_search_fields() -> List[str]:
+        return ["title"]
 
 
 # TODO: stub
-class Product(BaseModel):
+class Product(BaseModelTortoise):
     """Product"""
 
     title = fields.CharField(max_length=256, index=True)

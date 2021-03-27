@@ -19,12 +19,13 @@ tags = [
     {"name": "Authentication", "description": "Authenticate user, create openid and manage openid associations."},
     {"name": "Users", "description": "Endpoints used to manage users and role associations."},
     {"name": "Roles", "description": "Endpoints used to manage user roles"},
+    {"name": "Categories", "description": "Categories allow basic products differentiation."},
     {"name": "Tags", "description": "Tags allow better products and categories sub-categorization."},
     {"name": "Service", "description": "Service endpoint used to manager ShopAPI environment and deployment."},
 ]
 
 app = FastAPI(
-    redoc_url=None,
+    # redoc_url=None,
     title="ShopAPI",
     description="Made possible with `FastAPI`, `tortoise-orm` and many others",
     openapi_tags=tags,
@@ -45,5 +46,6 @@ app.include_router(routers.user.router)
 app.include_router(routers.service.router)
 app.include_router(routers.role.router)
 app.include_router(routers.tag.router)
+app.include_router(routers.category.router)
 
 register_tortoise(app, db_url=build_db_url(), modules={"models": ["shopapi.schemas.models"]}, generate_schemas=True)

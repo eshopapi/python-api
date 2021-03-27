@@ -5,7 +5,7 @@ import logging
 
 from typing import Optional
 from urllib.parse import urljoin
-from fastapi import APIRouter, Cookie, Depends
+from fastapi import APIRouter, Cookie, Depends, status
 
 from fastapi_sso.sso.base import SSOBase
 from fastapi_sso.sso.google import GoogleSSO
@@ -57,9 +57,9 @@ async def auth_login(user: api.LoginUserIn, permanent: bool = False):
     db_user = await actions.user.get_user_by_email(user.email)
     if db_user is None:
         raise exceptions.AuthenticationException()
-    if db_user.password is None:
+    if db_user.password_hash is None:
         raise exceptions.AuthenticationException()
-    if not security.verify_password(user.password, db_user.password.decode("ascii")):
+    if not security.verify_password(user.password, db_user.password_hash.decode("ascii")):
         raise exceptions.AuthenticationException()
     return await actions.user.login_user(db_user, permanent=permanent)
 
@@ -119,4 +119,13 @@ async def auth_sso_add(provider: str, user: schemas.UserToken = Depends(dependen
     sso = _provider_factory(provider)
     response = await sso.get_login_redirect()
     response.set_cookie("ssoaction", "add-provider", expires=300)
+    return response
+
+
+@router.post("/register")
+async def auth_register(user: api.LoginUserIn, redirect_to: Optional[str] = Cookie(None)):
+    """Register new user"""
+    userdb = await actions.user.create_user(user)
+    response = await actions.user.login_user(userdb, redirect_to=redirect_to)
+    response.status_code = status.HTTP_201_CREATED
     return response

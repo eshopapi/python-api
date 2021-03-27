@@ -1,6 +1,7 @@
 """Service endpoints used to migrate db, update, backup etc.
 """
 
+import logging
 from typing import List
 from fastapi import APIRouter
 from tortoise.exceptions import DoesNotExist
@@ -15,6 +16,8 @@ from shopapi.schemas.schemas import (
 
 from shopapi.constants import ROLE_ADMIN_ID, ROLE_EDITOR_ID, ROLE_PUBLIC_ID, ROLE_VIEWER_ID
 from shopapi.helpers import demo
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/service", tags=["Service"])
 
@@ -55,6 +58,9 @@ async def service_demo_data():
         await actions.user.create_user(plain_user)
     for tag_input in demo.tags:
         await models.Tag.create(**tag_input.dict(exclude_none=True))
+    for category in demo.categories:
+        logger.info("Creating category %s", category)
+        await models.Category.create(**category.dict(exclude_none=True, exclude={"category": ["parent_category_id"]}))
 
 
 @router.delete("/demo-data")
@@ -72,5 +78,11 @@ async def service_demo_data_delete():
         try:
             tag_db = await models.Tag.get(name=tag_input.name)
             await tag_db.delete()
+        except DoesNotExist:
+            continue
+    for category in demo.categories:
+        try:
+            category_db = await models.Category.get(title=category.title)
+            await category_db.delete()
         except DoesNotExist:
             continue

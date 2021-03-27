@@ -7,3 +7,4 @@ from shopapi.routers import user
 from shopapi.routers import service
 from shopapi.routers import role
 from shopapi.routers import tag
+from shopapi.routers import category

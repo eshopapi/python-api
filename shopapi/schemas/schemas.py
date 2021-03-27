@@ -3,21 +3,12 @@
 
 from datetime import datetime
 from enum import IntFlag
-from typing import Mapping, Optional, Union
-
+from typing import Dict, Mapping, Optional, Union, List, Type, ClassVar
 from pydantic import BaseModel, EmailStr  # pylint: disable=no-name-in-module
 from fastapi_sso.sso.base import OpenID as OpenIDSSO
 
 from shopapi import constants
-
-
-class ORMModel(BaseModel):
-    """Base for orm models"""
-
-    class Config:
-        """Metadata"""
-
-        orm_mode = True
+from shopapi.schemas.base import ORMBase, BaseModelTortoise
 
 
 class DateTimesMixin:
@@ -25,6 +16,26 @@ class DateTimesMixin:
 
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
+
+
+class IterableChildren(BaseModel):
+    """Mixin that adds support for iterable children"""
+
+    iterable_children: ClassVar[Dict[str, Type[BaseModel]]] = {}
+
+    @classmethod
+    def from_orm(cls, obj):
+        """Override to enable returning nested ManyToMany fields"""
+        if not cls.iterable_children:
+            base = super().from_orm(obj)
+            return base
+        if isinstance(obj, BaseModelTortoise):
+            base = cls(**obj.__dict__)
+            for field, ftype in cls.iterable_children.items():
+                children = [ftype(**child.__dict__) for child in getattr(obj, field)]
+                setattr(base, field, children)
+            return base
+        raise ValueError("Only Tortoise BaseModel children can be processed")
 
 
 class Permission(IntFlag):
@@ -55,7 +66,7 @@ EDITOR = Permission.READ | Permission.WRITE
 VIEWER = Permission.READ
 
 
-class RoleInputUser(ORMModel):
+class RoleInputUser(ORMBase):
     """Class to contain policies, given by user"""
 
     title: str
@@ -79,7 +90,7 @@ class Role(RoleInput, DateTimesMixin):
     id: int
 
 
-class UserDBInput(ORMModel):
+class UserDBInput(ORMBase):
     """User input to be loaded into DB"""
 
     id: Optional[int]
@@ -87,7 +98,7 @@ class UserDBInput(ORMModel):
     first_name: Optional[str]
     last_name: Optional[str]
     picture: Optional[str]
-    password: Optional[bytes]
+    password_hash: Optional[bytes]
     role_id: Optional[int] = constants.ROLE_PUBLIC_ID
     role: Optional[Role] = None
 
@@ -114,7 +125,7 @@ class OpenID(BaseModel):
         return OpenID(**dct)
 
 
-class OpenIDFromDB(ORMModel, OpenID, DateTimesMixin):
+class OpenIDFromDB(ORMBase, OpenID, DateTimesMixin):
     """OpenID"""
 
     id: int
@@ -155,7 +166,7 @@ class UserToken(BaseModel):
         )
 
 
-class TagUserInput(ORMModel):
+class TagUserInput(ORMBase):
     """Tag input from user"""
 
     name: str
@@ -171,3 +182,29 @@ class Tag(TagInput, DateTimesMixin):
     """Tag output from db"""
 
     id: int
+
+
+class CategoryUserInput(ORMBase, IterableChildren):
+    """Category input from user"""
+
+    iterable_children: ClassVar[Dict[str, Type[BaseModel]]] = {"tags": Tag}
+
+    title: str
+    parent_category_id: Optional[int]
+    tags: Optional[List[Tag]]
+
+
+class CategoryInput(CategoryUserInput):
+    """Category input"""
+
+    id: Optional[int]
+
+
+class Category(CategoryInput, DateTimesMixin):
+    """Category output from db"""
+
+    id: int
+    parent_category: Optional["CategoryInput"]
+
+
+Category.update_forward_refs()
